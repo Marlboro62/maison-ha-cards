@@ -1,0 +1,80 @@
+# Cartes Maison HA : exemple de tableau de bord (vue « sections »).
+# Remplacez les entités par les vôtres. Beaucoup de cartes fonctionnent sans aucune entité :
+# elles trouvent seules vos pièces, étages, lumières, volets, alarme, robot, imprimante 3D…
+
+views:
+  - type: sections
+    title: Maison
+    path: maison
+    max_columns: 4
+    sections:
+      - type: grid
+        column_span: 4
+        cards:
+          # Pastilles : sans « chips: », Tempo, portail, ouvertures, lumières, alarme, robot, imprimante et piles faibles
+          - type: custom:maison-chips-card
+          # Barre de navigation fixée en bas de l'écran
+          - type: custom:maison-navigation-card
+            items:
+              - { icon: mdi:home, path: "#" }
+              - { icon: mdi:lamps-outline, path: "#lumieres" }
+              - { icon: mdi:window-shutter-cog, path: "#volets" }
+              - { icon: mdi:robot-vacuum, path: "#robot" }
+              - { icon: mdi:chef-hat, path: "#menu" }
+
+      - type: grid
+        cards:
+          - type: custom:maison-alarme-card
+          - type: custom:maison-mode-card
+            entity: input_select.mode_chauffage
+            icon: mdi:thermostat
+            info: "{climate.salon:temperature}°C"
+
+      - type: grid
+        column_span: 2
+        cards:
+          # Plan : sans « floors: », les étages et pièces de Home Assistant
+          - type: custom:maison-plan-card
+
+      - type: grid
+        cards:
+          - type: custom:maison-meteo-card
+          - type: custom:maison-agenda-card
+            entities: [calendar.famille]
+          - type: custom:maison-jauge-card
+            entity: sensor.energie_du_jour
+            name: électricité
+            max: 30
+            secondary:
+              - { entity: sensor.puissance_maison, icon: mdi:home }
+              - { entity: sensor.puissance_solaire, icon: mdi:solar-power-variant }
+
+      # Fenêtres : ouvertes par les liens #… de la barre de navigation ou des cartes
+      - type: grid
+        column_span: 4
+        cards:
+          - type: custom:maison-popup-card
+            hash: "#lumieres"
+            title: Lumières
+            icon: mdi:lamps-outline
+            cards:
+              - type: custom:maison-boutons-card   # toutes les lumières, rangées par étage
+          - type: custom:maison-popup-card
+            hash: "#volets"
+            title: Volets
+            icon: mdi:window-shutter-cog
+            cards:
+              - type: custom:maison-volets-card     # tous les volets, rangés par étage
+          - type: custom:maison-popup-card
+            hash: "#robot"
+            title: Robot
+            icon: mdi:robot-vacuum
+            cards:
+              - type: custom:maison-robot-card
+          - type: custom:maison-popup-card
+            hash: "#menu"
+            title: Menu de la semaine
+            icon: mdi:chef-hat
+            cards:
+              - type: custom:maison-menu-card
+                todo: todo.liste_de_courses

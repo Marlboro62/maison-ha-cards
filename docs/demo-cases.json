@@ -1,0 +1,857 @@
+[
+ {
+  "name": "chips",
+  "width": 820,
+  "cards": [
+   {
+    "type": "custom:maison-chips-card",
+    "chips": [
+     {
+      "type": "tempo",
+      "entity": "sensor.rte_tempo_couleur_actuelle",
+      "next": "sensor.rte_tempo_prochaine_couleur",
+      "tap_action": {
+       "action": "navigate",
+       "navigation_path": "#tempo"
+      }
+     },
+     {
+      "type": "gate",
+      "entity": "cover.portail2"
+     },
+     {
+      "entity": "binary_sensor.verrousoussol_contact",
+      "icon": "mdi:garage-open-variant",
+      "name": "ouvert",
+      "active": true,
+      "show": {
+       "state": "on"
+      }
+     },
+     {
+      "type": "count",
+      "entity": "sensor.count_nombre_ouvrants_ouverts",
+      "icon": "mdi:window-open-variant"
+     },
+     {
+      "type": "goal",
+      "entity": "sensor.rex_activity_time",
+      "goal": "sensor.rex_daily_goal",
+      "name": "Rex {state|int}min"
+     },
+     {
+      "type": "battery",
+      "entity": "sensor.mokka_battery_level",
+      "label": "mokka",
+      "charging": {
+       "entity": "sensor.mokka_charging_status",
+       "state": "InProgress"
+      }
+     },
+     {
+      "type": "battery",
+      "entity": "sensor.battery",
+      "label": "Tesla",
+      "charging": {
+       "entity": "binary_sensor.charging",
+       "state": "on"
+      },
+      "plugged": {
+       "entity": "binary_sensor.charger",
+       "state": "on"
+      }
+     },
+     {
+      "entity": "sensor.jardin_switch_borne_electric_consumption_w",
+      "icon": "mdi:ev-station",
+      "name": "{state|int}W",
+      "active": true,
+      "show": {
+       "above": 300
+      }
+     },
+     {
+      "entity": "sensor.jours_granules_restants",
+      "icon": "mdi:calendar-end",
+      "name": "{state|int}j",
+      "show": {
+       "entity": "input_select.mode_saison",
+       "state": "hiver"
+      },
+      "levels": [
+       {
+        "above": 30,
+        "color": "green"
+       },
+       {
+        "above": 15,
+        "color": "orange"
+       },
+       {
+        "color": "red"
+       }
+      ]
+     },
+     {
+      "entity": "input_number.granule_restant",
+      "icon": "mdi:silo",
+      "name": "{state|int}kg",
+      "show": {
+       "entity": "input_select.mode_saison",
+       "state": "hiver"
+      },
+      "levels": [
+       {
+        "above": 1500,
+        "color": "green"
+       },
+       {
+        "above": 500,
+        "color": "orange"
+       },
+       {
+        "color": "red"
+       }
+      ]
+     },
+     {
+      "entity": "sensor.douches_douche1",
+      "icon": "mdi:shower-head",
+      "name": "{state|int}L",
+      "show": {
+       "above": 0
+      },
+      "levels": [
+       {
+        "below": 31,
+        "color": "green"
+       },
+       {
+        "below": 60,
+        "color": "orange"
+       },
+       {
+        "color": "red"
+       }
+      ]
+     },
+     {
+      "entity": "sensor.douches_douche3",
+      "icon": "mdi:shower-head",
+      "name": "{state|int}L",
+      "show": {
+       "above": 0
+      },
+      "levels": [
+       {
+        "below": 31,
+        "color": "green"
+       },
+       {
+        "below": 60,
+        "color": "orange"
+       },
+       {
+        "color": "red"
+       }
+      ]
+     },
+     {
+      "type": "printer",
+      "tap_action": {
+       "action": "navigate",
+       "navigation_path": "#bambu"
+      }
+     },
+     {
+      "type": "timer",
+      "entity": "sensor.lave_linge_remaining_time",
+      "icon": "mdi:washing-machine"
+     },
+     {
+      "entity": "input_select.cuisine_lavevaisselle",
+      "icon": "mdi:dishwasher",
+      "active": true,
+      "show": {
+       "state_not": "off"
+      },
+      "name": "{sensor.temps_restant_lavevaisselle}",
+      "states": {
+       "fini": {
+        "name": "fini"
+       }
+      }
+     },
+     {
+      "type": "vacuum",
+      "entity": "vacuum.alfred",
+      "name": "{sensor.cuisine_alfred_cleaning_area|int} m²"
+     },
+     {
+      "type": "flag",
+      "entity": "input_boolean.vider_bac_poussiere",
+      "icon": "mdi:robot-vacuum",
+      "name": "plein",
+      "tap_action": "toggle"
+     },
+     {
+      "entity": "switch.deshumidificateur",
+      "icon": "mdi:air-humidifier",
+      "name": "{sensor.cagibi_temperature_humidity|int}%",
+      "active": true,
+      "show": {
+       "state": "on"
+      },
+      "tap_action": "toggle"
+     },
+     {
+      "type": "bin",
+      "entity": "binary_sensor.lundi",
+      "name": "Poubelle Marron",
+      "color": "brown",
+      "after": "00:00"
+     },
+     {
+      "entity": "counter.compteur_sodastream",
+      "icon": "mdi:bottle-soda",
+      "name": "x{state}",
+      "active": true,
+      "tap_action": {
+       "action": "perform-action",
+       "perform_action": "counter.reset",
+       "target": {
+        "entity_id": "counter.compteur_sodastream"
+       }
+      }
+     },
+     {
+      "entity": "sensor.eta_alex",
+      "icon": "mdi:car-clock",
+      "name": "ETA Alex : {state} min",
+      "color": "pop",
+      "show": [
+       {
+        "entity": "input_boolean.alex_revient",
+        "state": "on"
+       },
+       {
+        "entity": "person.alex",
+        "state_not": "home"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name": "chips-auto",
+  "width": 820,
+  "cards": [
+   {
+    "type": "custom:maison-chips-card"
+   }
+  ]
+ },
+ {
+  "name": "maison",
+  "width": 460,
+  "cards": [
+   {
+    "type": "custom:maison-alarme-card",
+    "entity": "alarm_control_panel.maison",
+    "tap_action": {
+     "action": "navigate",
+     "navigation_path": "#securite"
+    }
+   },
+   {
+    "type": "custom:maison-volets-card",
+    "select": "input_select.mode_volets",
+    "tabs": [
+     {
+      "name": "maison",
+      "option": "maison",
+      "icon": "mdi:home",
+      "entity": "cover.voletsmaison"
+     },
+     {
+      "name": "rdc",
+      "option": "rdc",
+      "icon": "mdi:home-floor-0",
+      "entity": "cover.voletsrdc"
+     },
+     {
+      "name": "etage",
+      "option": "etage",
+      "icon": "mdi:home-floor-1",
+      "entity": "cover.voletsetage"
+     },
+     {
+      "name": "auto",
+      "option": "auto",
+      "icon": "mdi:window-shutter-auto",
+      "entity": "cover.voletsmaison"
+     }
+    ]
+   },
+   {
+    "type": "custom:maison-mode-card",
+    "entity": "input_select.mode_ballon",
+    "icon": "mdi:water-boiler",
+    "options": [
+     {
+      "option": "off",
+      "icon": "mdi:power"
+     },
+     {
+      "option": "électrique",
+      "icon": "mdi:lightning-bolt",
+      "info": "{sensor.chaufferie_prise_ballon_power|int}W"
+     },
+     {
+      "option": "chaudière",
+      "icon": "mdi:fire"
+     },
+     {
+      "option": "marche forcée",
+      "name": "manuel",
+      "icon": "mdi:toggle-switch-outline",
+      "info": "{sensor.chaufferie_prise_ballon_power|int}W"
+     }
+    ]
+   },
+   {
+    "type": "custom:maison-mode-card",
+    "entity": "input_select.mode_chauffage",
+    "icon": "mdi:thermostat",
+    "info": "{climate.salle_a_manger:temperature}°C",
+    "options": [
+     {
+      "option": "off",
+      "icon": "mdi:power",
+      "info": ""
+     },
+     {
+      "option": "nuit",
+      "icon": "mdi:moon-waning-crescent"
+     },
+     {
+      "option": "home office",
+      "icon": "mdi:desk"
+     },
+     {
+      "option": "confort",
+      "icon": "mdi:thermometer-plus"
+     },
+     {
+      "option": "turbo",
+      "icon": "mdi:fire"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name": "plan",
+  "width": 520,
+  "cards": [
+   {
+    "type": "custom:maison-plan-card",
+    "default": "fav",
+    "favorites": {
+     "name": "Favoris",
+     "layout": "\"salon chambre_emma recroom\"\n\"salon chambre_leo recroom\"\n",
+     "rows": "181px 181px",
+     "rooms": [
+      {
+       "area": "salon",
+       "grid_area": "salon",
+       "name": "Salon",
+       "icon": "mdi:sofa",
+       "path": "#salon",
+       "media_player": "media_player.shield_3",
+       "media_image": "image.image_jellyfin_salon",
+       "temperature": "sensor.salon_temperature",
+       "humidity": "sensor.salon_humidity",
+       "doors": [
+        "binary_sensor.salon_capteurfenetre_contact"
+       ],
+       "lights": [
+        "light.lumieres_ambiance",
+        "light.salon_lumieres"
+       ]
+      },
+      {
+       "area": "chambre_emma",
+       "grid_area": "chambre_emma",
+       "icon": "mdi:crown",
+       "corner": "bottom-left"
+      },
+      {
+       "area": "chambre_leo",
+       "grid_area": "chambre_leo",
+       "icon": "mdi:bed-single",
+       "corner": "top-right"
+      },
+      {
+       "area": "recroom",
+       "grid_area": "recroom",
+       "name": "Salle Ciné",
+       "corner": "top-left"
+      }
+     ]
+    },
+    "floors": [
+     {
+      "name": "Rez-de-chaussée",
+      "icon": "mdi:home-floor-0",
+      "layout": "\"sdb bureau salon\"\n\"sdb sam salon\"\n\"cuisine sam salon\"\n",
+      "rows": "146px 70px 146px",
+      "rooms": [
+       {
+        "area": "salon",
+        "grid_area": "salon",
+        "media_player": "media_player.shield_3"
+       },
+       {
+        "area": "cuisine",
+        "grid_area": "cuisine",
+        "corner": "bottom-left"
+       },
+       {
+        "area": "bureau",
+        "grid_area": "bureau",
+        "corner": "top-right"
+       },
+       {
+        "area": "sam",
+        "grid_area": "sam",
+        "name": "Salle\nà Manger",
+        "corner": "top-left"
+       },
+       {
+        "area": "sdbrdc",
+        "grid_area": "sdb",
+        "name": "Salle\nde Bain"
+       }
+      ]
+     },
+     {
+      "name": "Étage",
+      "icon": "mdi:home-floor-1",
+      "rooms": [
+       "chambre_leo",
+       "chambre_emma",
+       "chambre_parents",
+       "sdbetage",
+       "degagement"
+      ]
+     },
+     {
+      "name": "Sous-sol",
+      "icon": "mdi:home-floor-negative-1",
+      "rooms": [
+       "recroom",
+       "cagibi",
+       "buanderie",
+       "atelier"
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name": "plan-auto",
+  "width": 520,
+  "cards": [
+   {
+    "type": "custom:maison-plan-card"
+   }
+  ]
+ },
+ {
+  "name": "tuiles",
+  "width": 640,
+  "cards": [
+   {
+    "type": "custom:maison-jauge-card",
+    "entity": "sensor.electricite_daily",
+    "name": "électricité",
+    "max": 100,
+    "secondary": [
+     {
+      "entity": "sensor.salle_serveur_wattmetre_electric_consumption_w",
+      "icon": "mdi:home"
+     },
+     {
+      "entity": "sensor.puissance_solaire",
+      "icon": "mdi:solar-power-variant"
+     }
+    ]
+   },
+   {
+    "type": "custom:maison-meteo-card",
+    "entity": "weather.forecast_home",
+    "temperature": "sensor.gw1100a_outdoor_temperature",
+    "humidity": "sensor.gw1100a_humidity"
+   },
+   {
+    "type": "custom:maison-agenda-card",
+    "entity": "sensor.my_chambre_parents_calendar"
+   },
+   {
+    "type": "custom:maison-boutons-card",
+    "columns": 2,
+    "entities": [
+     {
+      "entity": "light.jardin_lumiere",
+      "icon": "mdi:grass",
+      "name": "extérieur"
+     },
+     {
+      "entity": "light.degagement_lampemurphy",
+      "icon": "mdi:wardrobe",
+      "name": "murphy"
+     },
+     {
+      "entity": "input_boolean.sdb_rdc_max2h",
+      "icon": "mdi:timer-refresh",
+      "name": "max 1h rdc",
+      "info": [
+       {
+        "if": {
+         "entity": "switch.bouclage",
+         "state": "on"
+        },
+        "text": "bouclage"
+       },
+       {
+        "if": {
+         "entity": "switch.sdb_rdc_seche_serviettes",
+         "state": "on"
+        },
+        "text": "chauffage"
+       }
+      ]
+     },
+     {
+      "entity": "input_boolean.arrosageauto",
+      "icon": "mdi:sprinkler",
+      "name": "arrosage",
+      "text_on": "{counter.arrosage_restant}min",
+      "info": "{sensor.jardin_capteurhumidite_soil_moisture}%"
+     },
+     {
+      "entity": "switch.jardin_switch_borne",
+      "icon": "mdi:ev-station",
+      "name": "borne",
+      "text_on": [
+       {
+        "if": {
+         "entity": "sensor.jardin_switch_borne_electric_consumption_w",
+         "above": 100
+        },
+        "text": "{sensor.jardin_switch_borne_electric_consumption_w|k|0}kW"
+       },
+       "Attente"
+      ],
+      "info": [
+       {
+        "if": {
+         "entity": "sensor.jardin_switch_borne_electric_consumption_w",
+         "above": 100
+        },
+        "text": "en charge"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "type": "custom:maison-mode-card",
+    "entity": "select.recroom_hub_activities",
+    "icon": "mdi:multimedia",
+    "options": [
+     {
+      "option": "power_off",
+      "name": "off",
+      "icon": "mdi:power"
+     },
+     {
+      "option": "Jouer a la PS5",
+      "name": "PS5",
+      "icon": "mdi:sony-playstation"
+     },
+     {
+      "option": "Jouer a la Switch",
+      "name": "Switch",
+      "icon": "mdi:nintendo-switch"
+     },
+     {
+      "option": "Regarder un film",
+      "name": "film",
+      "icon": "mdi:movie-open"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name": "lumieres",
+  "width": 760,
+  "cards": [
+   {
+    "type": "custom:maison-boutons-card",
+    "sections": [
+     {
+      "title": "é t a g e",
+      "entities": [
+       {
+        "entity": "light.degagement_lampemurphy",
+        "icon": "mdi:wardrobe",
+        "name": "Murphy"
+       },
+       {
+        "entity": "light.lampes_chambre_emma",
+        "icon": "mdi:crown",
+        "name": "Chambre Emma"
+       },
+       {
+        "entity": "light.wled_chambre_leo",
+        "icon": "mdi:bed-single",
+        "name": "Chambre Léo"
+       },
+       {
+        "entity": "light.chambre_parents_ventilateur",
+        "icon": "mdi:ceiling-fan-light",
+        "name": "Chambre parents"
+       }
+      ]
+     },
+     {
+      "title": "rdc",
+      "entities": [
+       {
+        "entity": "light.salon_lumieres",
+        "icon": "mdi:sofa",
+        "name": "salon"
+       },
+       {
+        "entity": "light.lumiere_sejour",
+        "icon": "mdi:table-furniture",
+        "name": "séjour"
+       },
+       {
+        "entity": "light.bureau_ampoule",
+        "icon": "mdi:desk",
+        "name": "bureau"
+       },
+       {
+        "entity": "light.lumieres_ambiance",
+        "icon": "mdi:lamps",
+        "name": "ambiance"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name": "volets",
+  "width": 760,
+  "cards": [
+   {
+    "type": "custom:maison-volets-card",
+    "sections": [
+     {
+      "title": "é t a g e",
+      "entities": [
+       {
+        "entity": "cover.velux_external_cover_roller_shutter_2",
+        "name": "Chambre Léo"
+       },
+       {
+        "entity": "cover.chambre_chambre_parents_volet_fenetre",
+        "name": "Chambre parents"
+       }
+      ]
+     },
+     {
+      "title": "rdc",
+      "entities": [
+       {
+        "entity": "cover.salon_volet_fenetre",
+        "name": "salon"
+       },
+       {
+        "entity": "cover.sdb_rdc_volet_fenetre",
+        "name": "salle de bain"
+       },
+       {
+        "entity": "cover.salle_a_manger_volet_fenetre",
+        "name": "fenêtre séjour"
+       },
+       {
+        "entity": "cover.salle_a_manger_volet_baie_2",
+        "name": "baie séjour"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name": "appareils",
+  "width": 460,
+  "cards": [
+   {
+    "type": "custom:maison-robot-card",
+    "entity": "vacuum.alfred",
+    "alert": "input_boolean.vider_bac_poussiere"
+   },
+   {
+    "type": "custom:maison-voiture-card",
+    "name": "tesla",
+    "battery": "sensor.battery",
+    "range": "sensor.range",
+    "odometer": "sensor.odometer",
+    "charging": "binary_sensor.charging",
+    "plugged": "binary_sensor.charger",
+    "charger_power": "sensor.charger_power",
+    "climate": "climate.hvac_climate_system"
+   },
+   {
+    "type": "custom:maison-imprimante-card",
+    "name": "Bambu P1P",
+    "prefix": "bambu_p1p",
+    "camera": "camera.camerabambu_clear",
+    "camera_view": "image"
+   }
+  ]
+ },
+ {
+  "name": "menu",
+  "width": 900,
+  "cards": [
+   {
+    "type": "custom:maison-menu-card",
+    "first_day": "samedi",
+    "day_entity": "input_select.jour_menu",
+    "todo": "todo.shopping_list",
+    "days": [
+     {
+      "day": "samedi",
+      "entity": "sensor.menu_samedi_2"
+     },
+     {
+      "day": "dimanche",
+      "entity": "sensor.menu_dimanche_2"
+     },
+     {
+      "day": "lundi",
+      "entity": "sensor.menu_lundi_2"
+     },
+     {
+      "day": "mardi",
+      "entity": "sensor.menu_mardi_2"
+     },
+     {
+      "day": "mercredi",
+      "entity": "sensor.menu_mercredi_2"
+     },
+     {
+      "day": "jeudi",
+      "entity": "sensor.menu_jeudi_2"
+     },
+     {
+      "day": "vendredi",
+      "entity": "sensor.menu_vendredi_2"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name": "menu-mobile",
+  "width": 400,
+  "cards": [
+   {
+    "type": "custom:maison-menu-card",
+    "todo": "todo.shopping_list"
+   }
+  ]
+ },
+ {
+  "name": "navigation",
+  "width": 460,
+  "cards": [
+   {
+    "type": "custom:maison-navigation-card",
+    "position": "inline",
+    "items": [
+     {
+      "icon": "mdi:lamps-outline",
+      "path": "#lumieres"
+     },
+     {
+      "icon": "mdi:window-shutter-cog",
+      "path": "#volets"
+     },
+     {
+      "icon": "mdi:security",
+      "path": "#securite"
+     },
+     {
+      "icon": "mdi:car",
+      "path": "#voitures"
+     },
+     {
+      "icon": "mdi:robot-vacuum",
+      "path": "#alfred",
+      "badge": {
+       "entity": "input_boolean.vider_bac_poussiere",
+       "state": "on",
+       "color": "red"
+      }
+     },
+     {
+      "icon": "mdi:chart-bar",
+      "path": "#energie"
+     },
+     {
+      "icon": "mdi:chef-hat",
+      "path": "#menu"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name": "popup",
+  "width": 900,
+  "hash": "#lumieres",
+  "cards": [
+   {
+    "type": "custom:maison-popup-card",
+    "hash": "#lumieres",
+    "title": "Lumières",
+    "icon": "mdi:lamps-outline",
+    "width_desktop": "70%",
+    "cards": [
+     {
+      "type": "custom:maison-boutons-card",
+      "entities": [
+       "light.salon_lumieres",
+       "light.wled_chambre_leo",
+       "light.lumiere_sejour"
+      ]
+     }
+    ]
+   }
+  ]
+ }
+]

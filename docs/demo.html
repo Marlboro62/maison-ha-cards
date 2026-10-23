@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cartes Maison HA · démo</title>
+<meta name="description" content="Démonstration des cartes Lovelace Cartes Maison HA (pastilles, pièces, plan, lumières, volets, alarme, modes, robot, voiture, imprimante 3D, menu, météo, agenda, jauge, navigation, fenêtres) avec des données simulées.">
+<style>
+  :root {
+    --bg: #e4e1dc; --panel: #f6f5f3; --line: #d6d2cb; --text: #2b2c2f; --muted: #6d6a64;
+    --accent: #d2703a; --btn: #ecebe8; --btn-on: #f6b38b;
+    /* Variables lues par les cartes en mode « Thème Home Assistant » */
+    --card-background-color: #ffffff; --primary-text-color: #212121; --secondary-text-color: #727272;
+    --divider-color: rgba(0, 0, 0, .12); --accent-color: #ff9800; --ha-card-border-radius: 12px;
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --bg: #141619; --panel: #1e2125; --line: #33373d; --text: #eceef1; --muted: #9aa0a8;
+    --accent: #f0a274; --btn: #2a2d32; --btn-on: #6b4632;
+    --card-background-color: #1c1c1c; --primary-text-color: #e1e1e1; --secondary-text-color: #9b9b9b;
+    --divider-color: rgba(225, 225, 225, .12);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--accent); }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 28px 16px 120px; }
+  .top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
+  .top svg { width: 44px; height: 44px; flex: none; }
+  h1 { font-size: 1.5rem; margin: 0; line-height: 1.2; }
+  .lead { margin: 2px 0 0; color: var(--muted); }
+  .badge { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: .75rem; font-weight: 600; background: var(--btn-on); vertical-align: middle; }
+  .links { margin-left: auto; display: flex; gap: 14px; font-size: .9rem; }
+  .grid { display: grid; grid-template-columns: 330px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .links { margin-left: 0; } .stage { order: -1; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
+  .panel h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+  .panel h2:not(:first-child) { margin-top: 18px; }
+  .ctl { margin-bottom: 14px; }
+  .ctl:last-child { margin-bottom: 0; }
+  .ctl-l { font-size: .85rem; margin-bottom: 6px; }
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  .seg button { font: inherit; font-size: .82rem; padding: 5px 11px; border-radius: 999px; cursor: pointer; border: 1px solid var(--line); background: var(--btn); color: var(--text); }
+  .seg button[aria-pressed="true"] { background: var(--btn-on); border-color: var(--accent); font-weight: 600; }
+  .seg button:focus-visible, .copy:focus-visible, .open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .stage { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .frame { margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 12px; transition: max-width .25s ease; }
+  .frame[data-width="mobile"] { max-width: 440px; }
+  .frame[data-width="large"] { max-width: 860px; }
+  .hint { font-size: .82rem; color: var(--muted); text-align: center; margin: 0; }
+  .open { font: inherit; align-self: center; padding: 8px 16px; border-radius: 999px; border: none; background: var(--btn-on); color: var(--text); cursor: pointer; font-weight: 600; }
+  pre { margin: 0; padding: 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow: auto; max-height: 460px; white-space: pre; }
+  .yaml-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .yaml-h h2 { margin: 0; }
+  .copy { font: inherit; font-size: .8rem; padding: 4px 10px; border-radius: 8px; cursor: pointer; border: 1px solid var(--line); background: var(--btn); color: var(--text); }
+  [hidden] { display: none !important; }
+  .note { font-size: .82rem; color: var(--muted); margin: 18px 0 0; }
+  .toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); padding: 10px 16px; border-radius: 10px; z-index: 20;
+    background: var(--panel); border: 1px solid var(--accent); font-size: .88rem; box-shadow: 0 6px 24px rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none; transition: opacity .2s; max-width: calc(100% - 32px); }
+  .toast.on { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .frame, .toast { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 14.5 16 4l12 10.5V27a1.5 1.5 0 0 1-1.5 1.5h-21A1.5 1.5 0 0 1 4 27z" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/><circle cx="16" cy="19" r="4.5" fill="var(--accent)"/></svg>
+    <div>
+      <h1>Cartes Maison HA <span class="badge" id="ver">démo</span></h1>
+      <p class="lead">Un tableau de bord « maison » en cartes autonomes · données simulées, sans Home Assistant</p>
+    </div>
+    <nav class="links">
+      <a href="https://github.com/Marlboro62/maison-ha-cards">Dépôt GitHub</a>
+      <a href="https://github.com/Marlboro62/maison-ha-cards#installation">Installation</a>
+    </nav>
+  </header>
+
+  <div class="grid">
+    <aside class="panel" aria-label="Réglages de la démo">
+      <h2>Cartes</h2>
+      <div class="ctl"><div class="seg" data-key="card">
+        <button data-v="chips">Pastilles</button><button data-v="chips-auto">Pastilles automatiques</button>
+        <button data-v="plan">Plan des pièces</button><button data-v="plan-auto">Plan automatique</button>
+        <button data-v="maison">Alarme, volets, modes</button><button data-v="lumieres">Lumières</button><button data-v="volets">Volets</button>
+        <button data-v="tuiles">Jauge, météo, agenda, interrupteurs</button><button data-v="appareils">Robot, voiture, imprimante 3D</button>
+        <button data-v="menu">Menu de la semaine</button><button data-v="navigation">Navigation et fenêtre</button></div></div>
+
+      <h2>Affichage</h2>
+      <div class="ctl"><div class="ctl-l">Page</div><div class="seg" data-key="page">
+        <button data-v="light">Clair</button><button data-v="dark">Sombre</button></div></div>
+      <div class="ctl"><div class="ctl-l">Couleurs des cartes (<code>theme</code>)</div><div class="seg" data-key="theme">
+        <button data-v="maison">Maison (pastel)</button><button data-v="v2">MyElectricalData</button><button data-v="auto">MyElectricalData auto</button><button data-v="ha">Thème Home Assistant</button></div></div>
+      <div class="ctl"><div class="ctl-l">Largeur</div><div class="seg" data-key="width">
+        <button data-v="mobile">Téléphone</button><button data-v="large">Tablette / PC</button></div></div>
+
+      <h2>Situation simulée</h2>
+      <div class="ctl" data-for="maison chips chips-auto"><div class="ctl-l">Alarme</div><div class="seg" data-key="alarm">
+        <button data-v="disarmed">Désarmée</button><button data-v="armed_night">Nuit</button><button data-v="armed_away">Absent</button><button data-v="triggered">Déclenchée</button></div></div>
+      <div class="ctl" data-for="chips chips-auto"><div class="ctl-l">Tempo aujourd'hui / demain</div><div class="seg" data-key="tempo">
+        <button data-v="Bleu|Blanc">Bleu / Blanc</button><button data-v="Blanc|Rouge">Blanc / Rouge</button><button data-v="Rouge|Bleu">Rouge / Bleu</button></div></div>
+      <div class="ctl" data-for="appareils chips chips-auto"><div class="ctl-l">Robot</div><div class="seg" data-key="vacuum">
+        <button data-v="cleaning">Nettoyage</button><button data-v="docked">Sur la base</button><button data-v="error">Erreur</button></div></div>
+      <div class="ctl" data-for="appareils chips chips-auto"><div class="ctl-l">Imprimante 3D</div><div class="seg" data-key="printing">
+        <button data-v="on">Impression</button><button data-v="off">Inactive</button></div></div>
+      <div class="ctl" data-for="plan plan-auto"><div class="ctl-l">Lecteur du salon</div><div class="seg" data-key="media">
+        <button data-v="on">Film en cours</button><button data-v="off">Arrêté</button></div></div>
+      <div class="ctl" data-for="maison"><div class="ctl-l">Chauffage</div><div class="seg" data-key="chauffage">
+        <button data-v="nuit">Nuit</button><button data-v="confort">Confort</button><button data-v="turbo">Turbo</button></div></div>
+    </aside>
+
+    <main class="stage">
+      <div class="frame" id="frame"></div>
+      <button class="open" id="open" hidden>Ouvrir la fenêtre « Lumières »</button>
+      <p class="hint">Les cartes réagissent comme dans Home Assistant : clic, appui long, curseurs, onglets, clavier de l'alarme… Rien n'est envoyé : la démo l'indique seulement.</p>
+      <section class="panel">
+        <div class="yaml-h"><h2>Configuration</h2><button class="copy" id="copy">Copier</button></div>
+        <pre id="yaml"></pre>
+      </section>
+    </main>
+  </div>
+
+  <p class="note">Les noms et valeurs sont fictifs. Dans Home Assistant, beaucoup de cartes trouvent vos entités toutes seules (pièces, étages,
+    intégrations Tempo, Bambu Lab, Moonraker, Tesla…) : voir le <a href="https://github.com/Marlboro62/maison-ha-cards#readme">README</a>.</p>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  /* Home Assistant fournit <ha-card> et <ha-icon> ; ici, <ha-icon> affiche les icônes Material Design Icons. */
+  if (!customElements.get("ha-card")) {
+    customElements.define("ha-card", class extends HTMLElement {
+      constructor() { super(); this.attachShadow({ mode: "open" }).innerHTML = "<style>:host{display:block}</style><slot></slot>"; }
+    });
+  }
+  if (!customElements.get("ha-icon")) {
+    customElements.define("ha-icon", class extends HTMLElement {
+      static get observedAttributes() { return ["icon"]; }
+      connectedCallback() { this._draw(); }
+      attributeChangedCallback() { this._draw(); }
+      _draw() {
+        const name = (this.getAttribute("icon") || "").replace(/^mdi:/, "");
+        if (!name) return;
+        const url = `https://cdn.jsdelivr.net/npm/@mdi/svg@7.4.47/svg/${name}.svg`;
+        this.style.cssText += `;display:inline-block;width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);flex:none;` +
+          `background:currentColor;-webkit-mask:url(${url}) center/contain no-repeat;mask:url(${url}) center/contain no-repeat;`;
+      }
+    });
+  }
+  if (!customElements.get("hui-markdown-card")) customElements.define("hui-markdown-card", class extends HTMLElement { setConfig(c) { this.textContent = c.content; } });
+})();
+</script>
+<script src="demo-hass.js"></script>
+<script src="../maison-ha-cards.js"></script>
+<script>
+(async () => {
+  "use strict";
+  const CASES = Object.fromEntries((await (await fetch("demo-cases.json")).json()).map((c) => [c.name, c]));
+  const defaults = { card: "plan", page: "light", theme: "maison", width: "mobile", alarm: "armed_night", tempo: "Bleu|Blanc", vacuum: "cleaning", printing: "on", media: "on", chauffage: "confort" };
+  let state = { ...defaults };
+  try { state = { ...defaults, ...JSON.parse(localStorage.getItem("maison-ha-demo") || "{}") }; } catch (e) { /* stockage indisponible */ }
+  if (!CASES[state.card]) state.card = defaults.card;
+
+  const frame = document.getElementById("frame");
+  const toast = document.getElementById("toast");
+  let toastTimer;
+  const say = (msg) => {
+    toast.textContent = msg;
+    toast.classList.add("on");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("on"), 2600);
+  };
+
+  /* Petit convertisseur YAML pour afficher la configuration. */
+  const needQuote = (s) => s === "" || /^(on|off|yes|no|true|false|null|~)$/i.test(s) || /^[\s#&*!|>'"%@`{[\]-]|: |\s#|[:]$|^\d[\d.]*$/.test(s);
+  const scalar = (v) => {
+    if (typeof v !== "string") return String(v);
+    if (v.includes("\n")) return null;
+    return needQuote(v) ? JSON.stringify(v) : v;
+  };
+  function yaml(v, ind = 0) {
+    const pad = " ".repeat(ind);
+    if (Array.isArray(v)) {
+      if (!v.length) return " []";
+      return "\n" + v.map((x) => {
+        if (x && typeof x === "object") {
+          const body = yaml(x, ind + 2).replace(/^\n/, "");
+          return `${pad}- ${body.slice(ind + 2)}`;
+        }
+        return `${pad}- ${scalar(x) ?? JSON.stringify(x)}`;
+      }).join("\n");
+    }
+    if (v && typeof v === "object") {
+      const keys = Object.keys(v);
+      if (!keys.length) return " {}";
+      return "\n" + keys.map((k) => {
+        const x = v[k];
+        if (typeof x === "string" && x.includes("\n")) return `${pad}${k}: |\n${x.replace(/\n$/, "").split("\n").map((l) => `${pad}  ${l}`).join("\n")}`;
+        if (x && typeof x === "object") return `${pad}${k}:${yaml(x, ind + 2)}`;
+        return `${pad}${k}: ${scalar(x)}`;
+      }).join("\n");
+    }
+    return ` ${scalar(v)}`;
+  }
+
+  function hass() {
+    const [t, n] = state.tempo.split("|");
+    const h = window.makeHass({
+      dark: state.page === "dark", alarm: state.alarm, tempo: t, tempoNext: n, vacuum: state.vacuum,
+      printing: state.printing === "on", media: state.media === "on", chauffage: state.chauffage,
+    });
+    if (state.vacuum === "error") h.states["vacuum.alfred"].attributes = { ...h.states["vacuum.alfred"].attributes, error: "Brosse principale bloquée", status: "Erreur" };
+    h.callService = (d, s, data, target) => {
+      const id = target?.entity_id || data?.entity_id || "";
+      say(`Démo : ${d}.${s}${id ? ` sur ${[].concat(id).join(", ")}` : ""} (rien n'est envoyé ici).`);
+      return Promise.resolve();
+    };
+    return h;
+  }
+
+  function render() {
+    document.documentElement.dataset.theme = state.page;
+    frame.dataset.width = state.width;
+    document.querySelectorAll(".seg").forEach((seg) => seg.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === state[seg.dataset.key]))));
+    document.querySelectorAll("[data-for]").forEach((el) => { el.hidden = !el.dataset.for.split(" ").includes(state.card); });
+    const cs = CASES[state.card === "menu" && state.width === "mobile" ? "menu-mobile" : state.card];
+    const cards = (state.card === "navigation" ? [...cs.cards, ...CASES.popup.cards] : cs.cards).map((c) => ({ ...c, theme: state.theme }));
+    document.getElementById("open").hidden = state.card !== "navigation";
+    const shown = cards.map((c) => { const x = { ...c }; if (x.theme === "maison") delete x.theme; return x; });
+    document.getElementById("yaml").textContent = shown.length === 1
+      ? yaml(shown[0]).replace(/^\n/, "")
+      : `type: vertical-stack\ncards:${yaml(shown, 2)}`;
+    const h = hass();
+    frame.replaceChildren(...cards.map((cfg) => {
+      const el = document.createElement(cfg.type.replace("custom:", ""));
+      el.setConfig(cfg);
+      el.hass = h;
+      return el;
+    }));
+  }
+
+  document.querySelectorAll(".seg").forEach((seg) => seg.addEventListener("click", (ev) => {
+    const b = ev.target.closest("button");
+    if (!b) return;
+    state[seg.dataset.key] = b.dataset.v;
+    try { localStorage.setItem("maison-ha-demo", JSON.stringify(state)); } catch (e) { /* stockage indisponible */ }
+    render();
+  }));
+
+  document.getElementById("open").addEventListener("click", () => {
+    history.pushState(null, "", "#lumieres");
+    window.dispatchEvent(new CustomEvent("location-changed"));
+  });
+
+  document.getElementById("copy").addEventListener("click", async (ev) => {
+    try { await navigator.clipboard.writeText(document.getElementById("yaml").textContent); ev.target.textContent = "Copié ✓"; }
+    catch (e) { ev.target.textContent = "Sélectionnez le texte"; }
+    setTimeout(() => { ev.target.textContent = "Copier"; }, 1600);
+  });
+
+  fetch("../maison-ha-cards.js").then((r) => r.text()).then((t) => {
+    const m = /CARD_VERSION = "([^"]+)"/.exec(t);
+    if (m) document.getElementById("ver").textContent = `v${m[1]} · démo`;
+  }).catch(() => {});
+
+  history.replaceState(null, "", location.pathname + location.search);
+  render();
+})();
+</script>
+</body>
+</html>
