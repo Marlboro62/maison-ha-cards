@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.2.0-beta";
+const CARD_VERSION = "0.2.1-beta";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -319,7 +319,7 @@ const themeClass = (theme, hass) => {
 };
 
 const BASE_STYLE = `<style>
-:host { display: block; }
+:host { display: block; font-family: var(--ha-font-family-body, inherit); }
 ha-card {
   --m-radius: 22px;
   background: var(--m-card); color: var(--m-text); border: none; box-shadow: var(--maison-shadow, none);
@@ -2302,7 +2302,7 @@ class MaisonNavigationCard extends MaisonCard {
   getGridOptions() { return { columns: 12, rows: "auto" }; }
 }
 MaisonNavigationCard.STYLE = `<style>
-:host { display: block; min-height: 70px; }
+:host { display: block; min-height: 70px; font-family: var(--ha-font-family-body, inherit); }
 ha-card { background: var(--m-text); color: var(--m-card); border-radius: 100px; padding: 8px 10px; overflow: visible; }
 ha-card.th-v2 { background: #0f1724; color: #e7edf5; }
 ha-card.nav-fixed { position: fixed; z-index: 6; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); left: 10px; width: calc(100% - 20px); height: auto; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
@@ -2555,7 +2555,7 @@ class MaisonPopupCard extends HTMLElement {
   }
 }
 MaisonPopupCard.STYLE = `<style>
-:host { display: block; }
+:host { display: block; font-family: var(--ha-font-family-body, inherit); }
 .pp-ov { position: fixed; inset: 0; z-index: 7; display: none; align-items: flex-end; justify-content: center; }
 .pp-ov.open { display: flex; }
 .pp-bd { position: absolute; inset: 0; background: rgba(0, 0, 0, .35); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); animation: pp-f .2s; }

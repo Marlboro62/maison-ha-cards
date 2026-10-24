@@ -377,6 +377,10 @@ L'heure se met à jour à chaque minute, la date est en toutes lettres (`show_da
 
 Les cartes, les tuiles carrées et les pièces du plan prennent l'ombre définie par `--maison-shadow` dans votre thème (aucune par défaut). Exemple : `--maison-shadow: 0 4px 14px rgba(30, 40, 60, .10)`. `--active-on-pop` règle la couleur du texte posé sur la couleur d'accent.
 
+## Police
+
+Les cartes prennent la police du thème (`--ha-font-family-body`), y compris un thème appliqué à une seule vue (`theme:` de la vue). Exemple, avec une police déclarée par une ressource CSS : `ha-font-family-body: "'Ma police', Roboto, sans-serif"`.
+
 ## Barre de navigation — `custom:maison-navigation-card`
 
 ```yaml
