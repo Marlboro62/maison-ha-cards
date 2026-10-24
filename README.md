@@ -71,7 +71,7 @@ Toutes les cartes acceptent `theme` :
 
 | Valeur | Rendu |
 | --- | --- |
-| `maison` (défaut) | Pastel, clair ou sombre selon Home Assistant. Si votre thème définit `--gray000`, `--gray200`, `--gray800`, `--active-pop`, `--active-green`…, ce sont **vos couleurs** qui sont utilisées. |
+| `maison` (défaut) | **Suit votre thème Home Assistant** (thème par défaut ou personnalisé, clair ou sombre) : fond des cartes, texte et pastilles reprennent `--card-background-color`, `--primary-text-color`…, avec des touches de couleur pastel. Si votre thème définit `--gray000`, `--gray200`, `--gray800`, `--active-pop`, `--active-green`…, ce sont ces couleurs qui sont utilisées. |
 | `v2` | Style MyElectricalData bleu nuit |
 | `auto` | Style MyElectricalData, clair ou sombre selon Home Assistant |
 | `ha` | Couleurs du thème Home Assistant |

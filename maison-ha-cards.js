@@ -24,7 +24,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.1.0-beta";
+const CARD_VERSION = "0.1.1-beta";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -306,7 +306,8 @@ function navigate(path) {
 
 /* ------------------------------------------------------------------ thèmes */
 
-/** maison : couleurs pastel du tableau de bord, reprend --gray000 / --gray800 / --active-pop de votre thème s'il les définit ;
+/** maison : fond, texte et pastilles suivent le thème Home Assistant de l'utilisateur (--card-background-color,
+ *  --primary-text-color…), avec les touches de couleur pastel ; --gray000 / --gray800 / --active-pop… restent prioritaires ;
  *  v2 : style MyElectricalData bleu nuit ; auto : MyElectricalData clair ou sombre ; ha : couleurs du thème Home Assistant. */
 const themeClass = (theme, hass) => {
   const dark = hass?.themes?.darkMode === true;
@@ -325,15 +326,19 @@ ha-card {
   font-variant-numeric: tabular-nums; container-type: inline-size; -webkit-tap-highlight-color: transparent;
 }
 ha-card.th-maison {
-  --m-card: var(--gray000, #f4f3f1); --m-chip: var(--gray200, #e5e3df); --m-text: var(--gray800, #2b2c2f);
-  --m-faint: var(--gray400, #b4b2ad); --m-pop: var(--active-pop, #f6b38b); --m-on-pop: var(--gray800, #2b2c2f);
+  --m-card: var(--gray000, var(--ha-card-background, var(--card-background-color, #f4f3f1)));
+  --m-text: var(--gray800, var(--primary-text-color, #2b2c2f));
+  --m-chip: var(--gray200, color-mix(in srgb, var(--m-text) 9%, var(--m-card)));
+  --m-faint: var(--gray400, var(--disabled-text-color, #b4b2ad)); --m-pop: var(--active-pop, #f6b38b); --m-on-pop: var(--gray800, #2b2c2f);
   --m-green: var(--active-green, #94d3a2); --m-orange: var(--active-orange, #f5c27a); --m-red: var(--active-red, #f08c84);
   --m-yellow: var(--active-yellow, #f3dc76); --m-blue: var(--active-blue, #8eb5f5); --m-blue-dark: var(--active-blue-dark, #3f5d8f);
   --m-purple: var(--active-purple, #c4a8f4); --m-brown: var(--active-brown, #b98a63); --m-acc: var(--pop, #d2703a);
 }
 ha-card.th-maison.dark {
-  --m-card: var(--gray000, #24272c); --m-chip: var(--gray200, #353940); --m-text: var(--gray800, #eceef1);
-  --m-faint: var(--gray400, #6d737c); --m-pop: var(--active-pop, #f0a274); --m-on-pop: #1f2124;
+  --m-card: var(--gray000, var(--ha-card-background, var(--card-background-color, #24272c)));
+  --m-text: var(--gray800, var(--primary-text-color, #eceef1));
+  --m-chip: var(--gray200, color-mix(in srgb, var(--m-text) 12%, var(--m-card)));
+  --m-faint: var(--gray400, var(--disabled-text-color, #6d737c)); --m-pop: var(--active-pop, #f0a274); --m-on-pop: #1f2124;
   --m-green: var(--active-green, #6fbf83); --m-orange: var(--active-orange, #e9ad5b); --m-red: var(--active-red, #e5776e);
   --m-yellow: var(--active-yellow, #e2c95a); --m-blue: var(--active-blue, #6f9de8); --m-blue-dark: var(--active-blue-dark, #4a6fae);
   --m-purple: var(--active-purple, #a98be6); --m-brown: var(--active-brown, #a77a55); --m-acc: var(--pop, #f0a274);
@@ -639,7 +644,7 @@ const THEME_SELECT = {
     select: {
       mode: "dropdown",
       options: [
-        { value: "maison", label: "Maison : pastel, clair ou sombre selon Home Assistant (reprend votre thème)" },
+        { value: "maison", label: "Maison : suit votre thème Home Assistant, avec des touches pastel" },
         { value: "v2", label: "Style MyElectricalData (bleu nuit)" },
         { value: "auto", label: "Style MyElectricalData, clair ou sombre selon Home Assistant" },
         { value: "ha", label: "Thème Home Assistant" },
