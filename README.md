@@ -381,6 +381,16 @@ Les cartes, les tuiles carrées et les pièces du plan prennent l'ombre définie
 
 Les cartes prennent la police du thème (`--ha-font-family-body`), y compris un thème appliqué à une seule vue (`theme:` de la vue). Exemple, avec une police déclarée par une ressource CSS : `ha-font-family-body: "'Ma police', Roboto, sans-serif"`.
 
+Pour une police large (tout en majuscules, par exemple), trois réglages du thème évitent que les noms soient coupés :
+
+| Variable | Rôle | Défaut |
+| --- | --- | --- |
+| `maison-font-scale` | Taille des petits textes (noms et états des tuiles, jours de la météo, date, heure de l'agenda) | `1` |
+| `maison-letter-spacing` | Espacement des lettres des noms et états des tuiles | celui de la carte |
+| `maison-font-synthesis` | `none` : pas de faux gras quand la police n'a qu'une graisse (le faux gras élargit le texte) | `auto` |
+
+Exemple : `maison-font-scale: "0.8"`, `maison-letter-spacing: "0.02em"`, `maison-font-synthesis: none`.
+
 ## Barre de navigation — `custom:maison-navigation-card`
 
 ```yaml

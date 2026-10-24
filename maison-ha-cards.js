@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.2.1-beta";
+const CARD_VERSION = "0.2.2-beta";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -319,7 +319,7 @@ const themeClass = (theme, hass) => {
 };
 
 const BASE_STYLE = `<style>
-:host { display: block; font-family: var(--ha-font-family-body, inherit); }
+:host { display: block; font-family: var(--ha-font-family-body, inherit); font-synthesis-weight: var(--maison-font-synthesis, auto); }
 ha-card {
   --m-radius: 22px;
   background: var(--m-card); color: var(--m-text); border: none; box-shadow: var(--maison-shadow, none);
@@ -1308,19 +1308,19 @@ ${SECTION_STYLE}
 .th-v2 .tile, .th-ha .tile { border: 1px solid var(--m-line); }
 .t-i { position: absolute; top: 14px; right: 14px; --mdc-icon-size: 28px; opacity: .85; }
 .t-s { position: absolute; left: 16px; top: 24px; font-size: clamp(22px, 24cqw, 38px); font-weight: 300; line-height: 1; white-space: nowrap; max-width: calc(100% - 66px); }
-.t-s small { display: block; font-size: 12px; font-weight: 600; margin-top: 3px; opacity: .85; overflow: hidden; text-overflow: ellipsis; }
+.t-s small { display: block; font-size: calc(12px * var(--maison-font-scale, 1)); font-weight: 600; margin-top: 3px; opacity: .85; overflow: hidden; text-overflow: ellipsis; }
 .tile:not(.on) .t-s small { color: var(--m-acc); opacity: 1; }
 .t-sw { position: absolute; right: 8px; top: 44px; --mdc-icon-size: 50px; opacity: .9; }
 .tile:not(.on) .t-sw { opacity: .35; }
-.t-n { position: absolute; left: 16px; right: 10px; bottom: 12px; font-size: 13px; font-weight: 600; letter-spacing: .3em; opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-n { position: absolute; left: 16px; right: 10px; bottom: 12px; font-size: calc(13px * var(--maison-font-scale, 1)); font-weight: 600; letter-spacing: var(--maison-letter-spacing, .3em); opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tile.na { opacity: .55; }
 .tile.sq { height: auto; aspect-ratio: 1; min-height: 104px; max-height: 140px; padding: 14px 12px; background: var(--m-card); color: var(--m-text);
   box-shadow: var(--maison-shadow, none); display: flex; flex-direction: column; justify-content: flex-end; cursor: pointer; }
 .tile.sq.on { background: color-mix(in srgb, var(--m-pop) 55%, var(--m-card)); }
 .q-i { position: absolute; top: 14px; left: 12px; --mdc-icon-size: 34px; }
 .tile.sq:not(.on) .q-i { opacity: .8; }
-.q-n { font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: lowercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.q-s { font-size: 11px; letter-spacing: .1em; color: var(--m-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-n { font-size: calc(15px * var(--maison-font-scale, 1)); font-weight: 600; letter-spacing: var(--maison-letter-spacing, .12em); text-transform: lowercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-s { font-size: calc(11px * var(--maison-font-scale, 1)); letter-spacing: var(--maison-letter-spacing, .1em); color: var(--m-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>`;
 
 /* ===================================================================== volets */
@@ -2109,11 +2109,11 @@ class MaisonMeteoCard extends MaisonCard {
 MaisonMeteoCard.STYLE = `<style>
 .wx { position: relative; padding: 14px 0 0; min-height: 190px; display: flex; flex-direction: column; }
 .fds { display: flex; justify-content: space-around; gap: 4px; padding: 0 10px; }
-.fd { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: .82rem; min-width: 0; }
+.fd { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: calc(.82rem * var(--maison-font-scale, 1)); min-width: 0; }
 .fd-d { color: var(--m-muted); text-transform: capitalize; }
 .fd ha-icon { --mdc-icon-size: 26px; color: var(--m-acc); }
 .fd-t { font-weight: 600; }
-.fd-l { color: var(--m-muted); font-size: .76rem; }
+.fd-l { color: var(--m-muted); font-size: calc(.76rem * var(--maison-font-scale, 1)); }
 .wx-m { position: relative; z-index: 2; padding: 4px 18px 10px; display: flex; align-items: flex-end; gap: 10px; flex: 1; }
 .wx-c { display: flex; align-items: center; gap: 6px; color: var(--m-muted); font-size: .85rem; padding-bottom: 14px; order: 2; }
 .wx-c ha-icon { --mdc-icon-size: 22px; }
@@ -2189,11 +2189,11 @@ ha-card.bare { background: none; border: none; box-shadow: none; border-radius: 
 .ev { display: grid; grid-template-columns: min-content 1fr; grid-template-areas: "date time" "date ev"; padding: 14px 18px; border-radius: var(--m-radius); background: var(--m-card); align-items: center; }
 .th-v2 .ev, .th-ha .ev { border: 1px solid var(--m-line); }
 .ev.first { grid-template-areas: "day ." "date time" "date ev"; padding: 18px; }
-.ev-day { grid-area: day; font-size: .85rem; text-transform: capitalize; color: var(--m-muted); }
+.ev-day { grid-area: day; font-size: calc(.85rem * var(--maison-font-scale, 1)); text-transform: capitalize; color: var(--m-muted); }
 .ev-date { grid-area: date; font-size: 1.4em; text-transform: uppercase; padding-right: 18px; border-right: 1px solid var(--m-pop); white-space: nowrap; align-self: stretch; display: flex; align-items: center; }
 .ev.first .ev-date { font-size: 2.6em; }
-.ev-time { grid-area: time; padding-left: 18px; font-size: .95em; }
-.ev.first .ev-time { font-size: 1.3em; }
+.ev-time { grid-area: time; padding-left: 18px; font-size: calc(.95em * var(--maison-font-scale, 1)); }
+.ev.first .ev-time { font-size: calc(1.3em * var(--maison-font-scale, 1)); }
 .ev-e { grid-area: ev; padding-left: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .ev.none { grid-template-areas: "ev"; color: var(--m-muted); }
 .ev.none .ev-e { padding: 0; }
@@ -2302,7 +2302,7 @@ class MaisonNavigationCard extends MaisonCard {
   getGridOptions() { return { columns: 12, rows: "auto" }; }
 }
 MaisonNavigationCard.STYLE = `<style>
-:host { display: block; min-height: 70px; font-family: var(--ha-font-family-body, inherit); }
+:host { display: block; min-height: 70px; font-family: var(--ha-font-family-body, inherit); font-synthesis-weight: var(--maison-font-synthesis, auto); }
 ha-card { background: var(--m-text); color: var(--m-card); border-radius: 100px; padding: 8px 10px; overflow: visible; }
 ha-card.th-v2 { background: #0f1724; color: #e7edf5; }
 ha-card.nav-fixed { position: fixed; z-index: 6; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); left: 10px; width: calc(100% - 20px); height: auto; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
@@ -2384,7 +2384,7 @@ class MaisonHorlogeCard extends MaisonCard {
 MaisonHorlogeCard.STYLE = `<style>
 ha-card.bare { background: none; border: none; box-shadow: none; border-radius: 0; overflow: visible; padding: 4px 6px; }
 .hm-c { font-size: 64px; font-weight: 600; letter-spacing: .04em; line-height: 1; text-align: center; }
-.hm-d { margin-top: 6px; text-align: center; font-size: 15px; font-weight: 300; color: var(--m-muted); }
+.hm-d { margin-top: 6px; text-align: center; font-size: calc(15px * var(--maison-font-scale, 1)); font-weight: 300; color: var(--m-muted); }
 .hm-m { margin-top: 26px; display: flex; flex-direction: column; gap: 4px; padding-top: 18px; border-top: 1px solid var(--m-line); }
 .hm-i { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 10px 18px; border-radius: 14px;
   font-size: 19px; font-weight: 300; letter-spacing: .3em; text-transform: lowercase; transition: background .2s; }
@@ -2392,7 +2392,7 @@ ha-card.bare { background: none; border: none; box-shadow: none; border-radius: 
 .hm-i.on { background: color-mix(in srgb, var(--m-blue) 22%, var(--m-card)); color: var(--m-blue-dark); }
 .hm-i.on ha-icon { opacity: 1; }
 .hm-xs { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--m-line); display: flex; flex-direction: column; gap: 8px; }
-.hm-x { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 300; }
+.hm-x { display: flex; align-items: center; gap: 8px; font-size: calc(15px * var(--maison-font-scale, 1)); font-weight: 300; }
 .hm-x ha-icon { --mdc-icon-size: 20px; color: var(--m-acc); }
 </style>`;
 
@@ -2555,7 +2555,7 @@ class MaisonPopupCard extends HTMLElement {
   }
 }
 MaisonPopupCard.STYLE = `<style>
-:host { display: block; font-family: var(--ha-font-family-body, inherit); }
+:host { display: block; font-family: var(--ha-font-family-body, inherit); font-synthesis-weight: var(--maison-font-synthesis, auto); }
 .pp-ov { position: fixed; inset: 0; z-index: 7; display: none; align-items: flex-end; justify-content: center; }
 .pp-ov.open { display: flex; }
 .pp-bd { position: absolute; inset: 0; background: rgba(0, 0, 0, .35); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); animation: pp-f .2s; }
