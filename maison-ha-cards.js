@@ -16,6 +16,7 @@
  *   custom:maison-meteo-card        température extérieure, prévisions et courbe
  *   custom:maison-agenda-card       prochains événements d'un calendrier
  *   custom:maison-jauge-card        jauge en fer à cheval avec deux valeurs secondaires
+ *   custom:maison-horloge-card      horloge, date et menu de navigation vertical (colonne latérale)
  *   custom:maison-navigation-card   barre de navigation en bas de l'écran
  *   custom:maison-popup-card        fenêtre qui s'ouvre sur un lien #ancre (remplace les pop-ups)
  *
@@ -24,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.1.1-beta";
+const CARD_VERSION = "0.2.0-beta";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -321,7 +322,7 @@ const BASE_STYLE = `<style>
 :host { display: block; }
 ha-card {
   --m-radius: 22px;
-  background: var(--m-card); color: var(--m-text); border: none; box-shadow: none;
+  background: var(--m-card); color: var(--m-text); border: none; box-shadow: var(--maison-shadow, none);
   border-radius: var(--m-radius); overflow: hidden; position: relative; height: 100%; box-sizing: border-box;
   font-variant-numeric: tabular-nums; container-type: inline-size; -webkit-tap-highlight-color: transparent;
 }
@@ -329,7 +330,7 @@ ha-card.th-maison {
   --m-card: var(--gray000, var(--ha-card-background, var(--card-background-color, #f4f3f1)));
   --m-text: var(--gray800, var(--primary-text-color, #2b2c2f));
   --m-chip: var(--gray200, color-mix(in srgb, var(--m-text) 9%, var(--m-card)));
-  --m-faint: var(--gray400, var(--disabled-text-color, #b4b2ad)); --m-pop: var(--active-pop, #f6b38b); --m-on-pop: var(--gray800, #2b2c2f);
+  --m-faint: var(--gray400, var(--disabled-text-color, #b4b2ad)); --m-pop: var(--active-pop, #f6b38b); --m-on-pop: var(--active-on-pop, var(--gray800, #2b2c2f));
   --m-green: var(--active-green, #94d3a2); --m-orange: var(--active-orange, #f5c27a); --m-red: var(--active-red, #f08c84);
   --m-yellow: var(--active-yellow, #f3dc76); --m-blue: var(--active-blue, #8eb5f5); --m-blue-dark: var(--active-blue-dark, #3f5d8f);
   --m-purple: var(--active-purple, #c4a8f4); --m-brown: var(--active-brown, #b98a63); --m-acc: var(--pop, #d2703a);
@@ -338,7 +339,7 @@ ha-card.th-maison.dark {
   --m-card: var(--gray000, var(--ha-card-background, var(--card-background-color, #24272c)));
   --m-text: var(--gray800, var(--primary-text-color, #eceef1));
   --m-chip: var(--gray200, color-mix(in srgb, var(--m-text) 12%, var(--m-card)));
-  --m-faint: var(--gray400, var(--disabled-text-color, #6d737c)); --m-pop: var(--active-pop, #f0a274); --m-on-pop: #1f2124;
+  --m-faint: var(--gray400, var(--disabled-text-color, #6d737c)); --m-pop: var(--active-pop, #f0a274); --m-on-pop: var(--active-on-pop, #1f2124);
   --m-green: var(--active-green, #6fbf83); --m-orange: var(--active-orange, #e9ad5b); --m-red: var(--active-red, #e5776e);
   --m-yellow: var(--active-yellow, #e2c95a); --m-blue: var(--active-blue, #6f9de8); --m-blue-dark: var(--active-blue-dark, #4a6fae);
   --m-purple: var(--active-purple, #a98be6); --m-brown: var(--active-brown, #a77a55); --m-acc: var(--pop, #f0a274);
@@ -1189,6 +1190,7 @@ class MaisonPlanCard extends MaisonCard {
 }
 MaisonPlanCard.STYLE = `<style>
 ha-card.bare { background: none; border: none; box-shadow: none; border-radius: 0; overflow: visible; }
+.room { box-shadow: var(--maison-shadow, none); }
 .p-tabs { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; }
 .p-title { flex: 1; font-size: 16px; font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .p-tab { display: inline-flex; align-items: center; padding: 4px; border-radius: 50px; background: var(--m-text); color: var(--m-card); }
@@ -1272,6 +1274,16 @@ class MaisonBoutonsCard extends MaisonCard {
     const icon = e.icon || o?.attributes?.icon || { light: "mdi:lightbulb", switch: "mdi:power-socket-eu", fan: "mdi:fan", input_boolean: "mdi:toggle-switch-outline", cover: "mdi:window-shutter", lock: "mdi:lock" }[d] || "mdi:power";
     const tap = this._cfgAct(e.tap_action, { action: "toggle" }, e.entity);
     const hold = this._cfgAct(e.hold_action, { action: "more-info" }, e.entity);
+    if (["carre", "carré", "square"].includes(this._config.tile)) {
+      // tuile carrée : icône en haut, nom espacé, état en petit ; allumée = fond d'accent doux et icône colorée
+      let st = pickText(on ? e.text_on : e.text_off, hass, e.entity);
+      if (st === null) st = na ? "indisponible" : on ? "activé" : "désactivé";
+      if (info !== null && on) st = `${st} · ${info}`;
+      const ic = on ? (color(e.color) || "var(--m-acc)") : "var(--m-text)";
+      return `<div class="tile sq${on ? " on" : ""}${na ? " na" : ""}"${this._click(tap, hold, `${nameOf(e, o)} : ${on ? "allumé" : "éteint"}`)} aria-pressed="${on}">` +
+        `<ha-icon class="q-i" icon="${esc(icon)}" style="color:${ic}"></ha-icon>` +
+        `<div class="q-n">${tpl(nameOf(e, o), hass)}</div><div class="q-s">${st}</div></div>`;
+    }
     return `<div class="tile${on ? " on" : ""}${na ? " na" : ""}" style="background:${bg};color:${fg}"${this._click(tap, hold, `${nameOf(e, o)} : ${on ? "allumé" : "éteint"}`)} aria-pressed="${on}">` +
       `<ha-icon class="t-i" icon="${esc(icon)}"></ha-icon>` +
       `<div class="t-s">${big}${info ? `<small>${info}</small>` : ""}</div>` +
@@ -1282,7 +1294,8 @@ class MaisonBoutonsCard extends MaisonCard {
   _render(c, hass) {
     const secs = this._resolved();
     if (!secs.length) return `<div class="empty"><b>Aucune entité</b>Ajoutez « entities » ou « sections » dans la configuration.</div>`;
-    const cols = c.columns ? `repeat(${Number(c.columns)},minmax(0,1fr))` : "repeat(auto-fill,minmax(120px,1fr))";
+    const sq = ["carre", "carré", "square"].includes(c.tile);
+    const cols = c.columns ? `repeat(${Number(c.columns)},minmax(0,1fr))` : `repeat(auto-fill,minmax(${sq ? 104 : 120}px,1fr))`;
     return secs.map((s) => `<div class="sec">${s.title ? `<div class="sec-t">${tpl(s.title, hass)}</div>` : ""}${s.subtitle ? `<div class="sec-s">${tpl(s.subtitle, hass)}</div>` : ""}` +
       `<div class="grid" style="grid-template-columns:${cols}">${s.entities.map((e) => this._tile(e, hass)).join("")}</div></div>`).join("");
   }
@@ -1301,6 +1314,13 @@ ${SECTION_STYLE}
 .tile:not(.on) .t-sw { opacity: .35; }
 .t-n { position: absolute; left: 16px; right: 10px; bottom: 12px; font-size: 13px; font-weight: 600; letter-spacing: .3em; opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tile.na { opacity: .55; }
+.tile.sq { height: auto; aspect-ratio: 1; min-height: 104px; max-height: 140px; padding: 14px 12px; background: var(--m-card); color: var(--m-text);
+  box-shadow: var(--maison-shadow, none); display: flex; flex-direction: column; justify-content: flex-end; cursor: pointer; }
+.tile.sq.on { background: color-mix(in srgb, var(--m-pop) 55%, var(--m-card)); }
+.q-i { position: absolute; top: 14px; left: 12px; --mdc-icon-size: 34px; }
+.tile.sq:not(.on) .q-i { opacity: .8; }
+.q-n { font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: lowercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-s { font-size: 11px; letter-spacing: .1em; color: var(--m-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>`;
 
 /* ===================================================================== volets */
@@ -2296,6 +2316,86 @@ ha-card.nav-fixed { position: fixed; z-index: 6; bottom: calc(10px + env(safe-ar
 .nv-b { position: absolute; top: 8px; right: calc(50% - 18px); width: 9px; height: 9px; border-radius: 50%; }
 </style>`;
 
+/* ============================================================ horloge et menu */
+
+class MaisonHorlogeCard extends MaisonCard {
+  static get DEFAULTS() { return { theme: "maison", show_date: true }; }
+
+  _cardClass() { return "bare"; }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._onLoc = () => this._update(true);
+    window.addEventListener("location-changed", this._onLoc);
+    window.addEventListener("popstate", this._onLoc);
+    window.addEventListener("hashchange", this._onLoc);
+    // redessine pile au changement de minute
+    const next = () => {
+      this._clk = setTimeout(() => { this._update(true); next(); }, 60e3 - (Date.now() % 60e3) + 50);
+    };
+    clearTimeout(this._clk);
+    next();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    clearTimeout(this._clk);
+    window.removeEventListener("location-changed", this._onLoc);
+    window.removeEventListener("popstate", this._onLoc);
+    window.removeEventListener("hashchange", this._onLoc);
+  }
+
+  _ids() {
+    const out = new Set();
+    JSON.stringify([this._config.items, this._config.info]).replace(/(?:\{|"entity":")([a-z_]+\.[a-z0-9_]+)/g, (m, id) => out.add(id));
+    return [...out];
+  }
+
+  _render(c, hass) {
+    const now = new Date();
+    const lang = hass?.locale?.language || hass?.language || "fr";
+    const time = now.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
+    const date = c.show_date === false ? "" : now.toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" });
+    const here = `${location.pathname}${location.hash}`;
+    const items = (c.items || []).map((it) => {
+      const path = it.path || it.navigation_path;
+      const active = path && (path.startsWith("#") ? location.hash === path : here === path || location.pathname === path);
+      const tap = this._cfgAct(it.tap_action, path ? { action: "navigate", navigation_path: path } : it.entity ? { action: "more-info" } : null, it.entity);
+      const hold = this._cfgAct(it.hold_action, null, it.entity);
+      return `<div class="hm-i${active ? " on" : ""}"${this._click(tap, hold, it.name || path)}><span>${tpl(it.name || "", hass, it.entity)}</span>` +
+        `${it.icon ? `<ha-icon icon="${esc(it.icon)}"></ha-icon>` : ""}</div>`;
+    }).join("");
+    const info = [].concat(c.info || []).map((x) => {
+      const spec = typeof x === "string" ? { text: x } : x;
+      if (spec.show && !cond(spec.show, hass, spec.entity)) return "";
+      const txt = pickText(spec.text, hass, spec.entity);
+      if (!txt) return "";
+      const tap = this._cfgAct(spec.tap_action, spec.entity ? { action: "more-info" } : null, spec.entity);
+      return `<div class="hm-x"${this._click(tap, null, txt)}>${spec.icon ? `<ha-icon icon="${esc(spec.icon)}"></ha-icon>` : ""}<span>${txt}</span></div>`;
+    }).join("");
+    return `<div class="hm-c">${esc(time)}</div>${date ? `<div class="hm-d">${esc(date)}</div>` : ""}` +
+      (items ? `<div class="hm-m">${items}</div>` : "") + (info ? `<div class="hm-xs">${info}</div>` : "");
+  }
+
+  getCardSize() { return 6; }
+
+  getGridOptions() { return { columns: 12, rows: "auto" }; }
+}
+MaisonHorlogeCard.STYLE = `<style>
+ha-card.bare { background: none; border: none; box-shadow: none; border-radius: 0; overflow: visible; padding: 4px 6px; }
+.hm-c { font-size: 64px; font-weight: 600; letter-spacing: .04em; line-height: 1; text-align: center; }
+.hm-d { margin-top: 6px; text-align: center; font-size: 15px; font-weight: 300; color: var(--m-muted); }
+.hm-m { margin-top: 26px; display: flex; flex-direction: column; gap: 4px; padding-top: 18px; border-top: 1px solid var(--m-line); }
+.hm-i { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 10px 18px; border-radius: 14px;
+  font-size: 19px; font-weight: 300; letter-spacing: .3em; text-transform: lowercase; transition: background .2s; }
+.hm-i ha-icon { --mdc-icon-size: 22px; opacity: .55; }
+.hm-i.on { background: color-mix(in srgb, var(--m-blue) 22%, var(--m-card)); color: var(--m-blue-dark); }
+.hm-i.on ha-icon { opacity: 1; }
+.hm-xs { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--m-line); display: flex; flex-direction: column; gap: 8px; }
+.hm-x { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 300; }
+.hm-x ha-icon { --mdc-icon-size: 20px; color: var(--m-acc); }
+</style>`;
+
 /* ================================================================= pop-up */
 
 /** Crée une carte Lovelace (y compris les cartes HA de base) à partir de sa configuration. */
@@ -2495,7 +2595,7 @@ const S = (name, options) => ({ name, selector: { select: { mode: "dropdown", op
 const allStrings = (v) => v === undefined || (Array.isArray(v) && v.every((x) => typeof x === "string"));
 
 const LABELS = {
-  theme: "Thème", name: "Nom", title: "Titre", icon: "Icône", entity: "Entité", entities: "Entités", columns: "Colonnes (vide = automatique)",
+  theme: "Thème", name: "Nom", title: "Titre", tile: "Style des tuiles", show_date: "Afficher la date", icon: "Icône", entity: "Entité", entities: "Entités", columns: "Colonnes (vide = automatique)",
   wrap: "Pastilles sur plusieurs lignes", align: "Alignement", area: "Pièce", temperature: "Température", humidity: "Humidité",
   media_player: "Lecteur multimédia", path: "Lien au clic (ex. #salon)", corner: "Coin carré", graph: "Courbe de température 24 h",
   height: "Hauteur (px)", row_height: "Hauteur d'une pièce (px)", slider: "Curseur de position", select: "Sélecteur de groupe (input_select)",
@@ -2519,7 +2619,8 @@ const EDITORS = {
     "Choisissez une pièce : température, humidité, ouvertures, lumières et lecteur sont trouvés tout seuls. Ouvertures et lumières se règlent aussi en YAML (doors:, lights:)."],
   "maison-plan-card": [() => [T("title"), N("row_height", 60, 400), THEME_SELECT],
     "Sans « floors: » en YAML, les étages et pièces de Home Assistant sont utilisés. Plan personnalisé (grille, favoris) : voir le README."],
-  "maison-boutons-card": [(c) => [...(allStrings(c.entities) && !c.sections ? [{ name: "entities", selector: { entity: { multiple: true } } }] : []), T("title"), N("columns", 1, 8), THEME_SELECT],
+  "maison-boutons-card": [(c) => [...(allStrings(c.entities) && !c.sections ? [{ name: "entities", selector: { entity: { multiple: true } } }] : []), T("title"), N("columns", 1, 8),
+    S("tile", [{ value: "classique", label: "Classique : état en grand et interrupteur" }, { value: "carre", label: "Carré : icône, nom et état" }]), THEME_SELECT],
     "Vide : toutes les lumières, rangées par étage. Sections, textes et couleurs : en YAML."],
   "maison-volets-card": [(c) => [...(allStrings(c.entities) && !c.sections && !c.tabs ? [{ name: "entities", selector: { entity: { multiple: true, domain: "cover" } } }] : []), N("columns", 1, 6), B("slider"), THEME_SELECT],
     "Vide : tous les volets, rangés par étage. Groupes avec sélecteur (tabs:) : en YAML."],
@@ -2544,6 +2645,8 @@ const EDITORS = {
     ...(allStrings(c.secondary) ? [{ name: "secondary", selector: { entity: { multiple: true } } }] : []), THEME_SELECT]],
   "maison-navigation-card": [() => [S("position", [{ value: "fixed", label: "Fixée en bas de l'écran" }, { value: "inline", label: "Dans la page" }]), THEME_SELECT],
     "Les icônes et liens se règlent en YAML (items:)."],
+  "maison-horloge-card": [() => [B("show_date"), THEME_SELECT],
+    "Le menu (items: nom, icône, lien) et les lignes d'info (info:) se règlent en YAML."],
   "maison-popup-card": [() => [T("hash"), T("title"), I("icon"), T("width_desktop"), N("auto_close", 0, 600000, 1000), THEME_SELECT],
     "Les cartes de la fenêtre se règlent en YAML (cards:). Un bouton avec « navigate » vers ce lien ouvre la fenêtre."],
 };
@@ -2571,6 +2674,8 @@ const CARDS = [
     (h) => ({ entity: Object.keys(h?.states || {}).find((id) => domainOf(id) === "sensor" && num(h.states[id].state) !== null) || "sensor.exemple", max: 100 })],
   ["maison-navigation-card", MaisonNavigationCard, "Maison · Barre de navigation", "Barre d'icônes fixée en bas de l'écran, vers vos vues et fenêtres.",
     () => ({ position: "inline", items: [{ icon: "mdi:home", path: "#" }, { icon: "mdi:lightbulb-group", path: "#lumieres" }, { icon: "mdi:window-shutter", path: "#volets" }] })],
+  ["maison-horloge-card", MaisonHorlogeCard, "Maison · Horloge et menu", "Heure en grand, date, menu de navigation vertical et lignes d'info, pour une colonne latérale.",
+    () => ({ items: [{ name: "home", icon: "mdi:dots-grid", path: "#" }, { name: "énergie", icon: "mdi:chart-areaspline", path: "/energy" }] })],
   ["maison-popup-card", MaisonPopupCard, "Maison · Fenêtre (pop-up)", "Une fenêtre qui s'ouvre sur un lien #… et contient d'autres cartes.",
     () => ({ hash: "#exemple", title: "Exemple", icon: "mdi:information-outline", cards: [{ type: "markdown", content: "Contenu de la fenêtre" }] })],
 ];

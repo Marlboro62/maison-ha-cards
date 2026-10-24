@@ -1,6 +1,6 @@
 # Cartes Maison HA
 
-**Seize cartes Lovelace autonomes, dans un seul fichier**, pour construire un tableau de bord « maison » complet : pastilles d'état, pièces et plan par étage, lumières, volets, alarme, modes, aspirateur robot, voiture électrique, imprimante 3D, menu de la semaine, météo, agenda, jauges, barre de navigation et fenêtres (pop-ups).
+**Dix-sept cartes Lovelace autonomes, dans un seul fichier**, pour construire un tableau de bord « maison » complet : pastilles d'état, pièces et plan par étage, lumières, volets, alarme, modes, aspirateur robot, voiture électrique, imprimante 3D, menu de la semaine, météo, agenda, jauges, barre de navigation et fenêtres (pop-ups).
 
 Elles remplacent les tableaux de bord construits avec **button-card** et ses modèles : plus besoin de button-card, decluttering-card, card-mod, bubble-card, layout-card, local-conditional-card, state-switch, mini-graph-card, mushroom, vacuum-card… **Une seule ressource**, un éditeur visuel pour chaque carte, et des entités **trouvées automatiquement** quand c'est possible.
 
@@ -42,6 +42,7 @@ Elles remplacent les tableaux de bord construits avec **button-card** et ses mod
 | `custom:maison-meteo-card` | **Météo** : température en grand, prévisions, courbe 24 h | la première entité `weather` |
 | `custom:maison-agenda-card` | **Agenda** : les prochains événements d'un ou plusieurs calendriers | le premier calendrier |
 | `custom:maison-jauge-card` | **Jauge** en fer à cheval avec deux valeurs secondaires | — |
+| `custom:maison-horloge-card` | **Horloge et menu** : heure en grand, date, menu de navigation vertical, lignes d'info (colonne latérale) | — |
 | `custom:maison-navigation-card` | **Barre de navigation** fixée en bas de l'écran | — |
 | `custom:maison-popup-card` | **Fenêtre** qui s'ouvre sur un lien `#…`, avec des cartes et des onglets | — |
 
@@ -237,7 +238,9 @@ sections:
           - Attente
 ```
 
-Sans `entities` ni `sections`, toutes les lumières, rangées par étage. Clic : marche / arrêt, appui long : fiche (luminosité, couleur). Par entité : `name`, `icon`, `color` (fond allumé), `text_on`, `text_off`, `info` (petit texte), `tap_action`, `hold_action`. Carte : `columns`, `title`.
+Sans `entities` ni `sections`, toutes les lumières, rangées par étage. Clic : marche / arrêt, appui long : fiche (luminosité, couleur). Par entité : `name`, `icon`, `color` (fond allumé), `text_on`, `text_off`, `info` (petit texte), `tap_action`, `hold_action`. Carte : `columns`, `title`, `tile`.
+
+`tile: carre` : tuiles carrées avec l'icône en haut, le nom espacé et l'état en petit (« activé », « désactivé » ou `text_on` / `text_off`) ; allumée, la tuile prend un fond d'accent doux et l'icône se colore.
 
 ## Volets — `custom:maison-volets-card`
 
@@ -354,6 +357,25 @@ secondary:
   - { entity: sensor.puissance_maison, icon: mdi:home }
   - { entity: sensor.puissance_solaire, icon: mdi:solar-power-variant }
 ```
+
+## Horloge et menu — `custom:maison-horloge-card`
+
+```yaml
+type: custom:maison-horloge-card
+items:                                   # menu vertical : l'entrée de la page ouverte est surlignée
+  - { name: home, icon: mdi:dots-grid, path: /tableau-maison/home }
+  - { name: cctv, icon: mdi:cctv, path: /tableau-maison/cctv }
+  - { name: consos, icon: mdi:chart-areaspline, path: /energy }
+  - { name: extra, icon: mdi:star-plus, path: "#extra" }
+info:                                    # lignes sous le menu (textes {…}, show:)
+  - { icon: mdi:washing-machine, text: "{sensor.lave_linge_temps_restant} restant", entity: sensor.lave_linge_temps_restant, show: { state_not: "0:00:00" } }
+```
+
+L'heure se met à jour à chaque minute, la date est en toutes lettres (`show_date: false` pour la masquer). Placée dans la première colonne d'une vue « sections », elle forme une colonne latérale.
+
+## Ombres
+
+Les cartes, les tuiles carrées et les pièces du plan prennent l'ombre définie par `--maison-shadow` dans votre thème (aucune par défaut). Exemple : `--maison-shadow: 0 4px 14px rgba(30, 40, 60, .10)`. `--active-on-pop` règle la couleur du texte posé sur la couleur d'accent.
 
 ## Barre de navigation — `custom:maison-navigation-card`
 
