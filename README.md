@@ -60,7 +60,7 @@ L'énergie et Tempo ont leurs propres cartes : [Cartes Linky Énergie](https://g
 
 ### Manuellement
 
-1. Téléchargez `maison-ha-cards.js` depuis les [releases](https://github.com/Marlboro62/maison-ha-cards/releases) et copiez-le dans `/config/www/`.
+1. Téléchargez [`maison-ha-cards.js`](https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/maison-ha-cards.js) (clic droit → Enregistrer sous) et copiez-le dans `/config/www/`.
 2. **Paramètres → Tableaux de bord → ⋮ → Ressources → Ajouter une ressource** : URL `/local/maison-ha-cards.js`, type **Module JavaScript**.
 3. Rechargez la page (Ctrl+F5).
 
