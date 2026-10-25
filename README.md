@@ -1,6 +1,6 @@
 # Cartes Maison HA
 
-**Dix-sept cartes Lovelace autonomes, dans un seul fichier**, pour construire un tableau de bord « maison » complet : pastilles d'état, pièces et plan par étage, lumières, volets, alarme, modes, aspirateur robot, voiture électrique, imprimante 3D, menu de la semaine, météo, agenda, jauges, barre de navigation et fenêtres (pop-ups).
+**Dix-huit cartes Lovelace autonomes, dans un seul fichier**, pour construire un tableau de bord « maison » complet : pastilles d'état, pièces et plan par étage, lumières, volets, alarme, modes, aspirateur robot, voiture électrique, imprimante 3D, menu de la semaine, météo, agenda, jauges, titres de section, barre de navigation et fenêtres (pop-ups).
 
 Elles remplacent les tableaux de bord construits avec **button-card** et ses modèles : plus besoin de button-card, decluttering-card, card-mod, bubble-card, layout-card, local-conditional-card, state-switch, mini-graph-card, mushroom, vacuum-card… **Une seule ressource**, un éditeur visuel pour chaque carte, et des entités **trouvées automatiquement** quand c'est possible.
 
@@ -43,6 +43,7 @@ Elles remplacent les tableaux de bord construits avec **button-card** et ses mod
 | `custom:maison-agenda-card` | **Agenda** : les prochains événements d'un ou plusieurs calendriers | le premier calendrier |
 | `custom:maison-jauge-card` | **Jauge** en fer à cheval avec deux valeurs secondaires | — |
 | `custom:maison-horloge-card` | **Horloge et menu** : heure en grand, date, menu de navigation vertical, lignes d'info (colonne latérale) | — |
+| `custom:maison-titre-card` | **Titre de section**, avec la police et les couleurs du thème (remplace la carte Titre) | — |
 | `custom:maison-navigation-card` | **Barre de navigation** fixée en bas de l'écran | — |
 | `custom:maison-popup-card` | **Fenêtre** qui s'ouvre sur un lien `#…`, avec des cartes et des onglets | — |
 
@@ -390,6 +391,20 @@ Pour une police large (tout en majuscules, par exemple), trois réglages du thè
 | `maison-font-synthesis` | `none` : pas de faux gras quand la police n'a qu'une graisse (le faux gras élargit le texte) | `auto` |
 
 Exemple : `maison-font-scale: "0.8"`, `maison-letter-spacing: "0.02em"`, `maison-font-synthesis: none`.
+
+## Titre de section — `custom:maison-titre-card`
+
+Remplace la carte Titre (`heading`) de Home Assistant. Celle-ci garde la police de l'interface même quand un thème est appliqué à la vue ; la carte Titre Maison prend celle du thème.
+
+```yaml
+type: custom:maison-titre-card
+title: l a m p e s
+icon: mdi:lightbulb-group   # facultatif
+style: title                # title (défaut) ou subtitle
+tap_action:                 # facultatif
+  action: navigate
+  navigation_path: /lumieres
+```
 
 ## Barre de navigation — `custom:maison-navigation-card`
 

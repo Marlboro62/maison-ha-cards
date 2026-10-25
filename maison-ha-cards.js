@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.2.2-beta";
+const CARD_VERSION = "0.2.3-beta";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -2109,11 +2109,11 @@ class MaisonMeteoCard extends MaisonCard {
 MaisonMeteoCard.STYLE = `<style>
 .wx { position: relative; padding: 14px 0 0; min-height: 190px; display: flex; flex-direction: column; }
 .fds { display: flex; justify-content: space-around; gap: 4px; padding: 0 10px; }
-.fd { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: calc(.82rem * var(--maison-font-scale, 1)); min-width: 0; }
+.fd { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: .82rem; min-width: 0; }
 .fd-d { color: var(--m-muted); text-transform: capitalize; }
 .fd ha-icon { --mdc-icon-size: 26px; color: var(--m-acc); }
 .fd-t { font-weight: 600; }
-.fd-l { color: var(--m-muted); font-size: calc(.76rem * var(--maison-font-scale, 1)); }
+.fd-l { color: var(--m-muted); font-size: .76rem; }
 .wx-m { position: relative; z-index: 2; padding: 4px 18px 10px; display: flex; align-items: flex-end; gap: 10px; flex: 1; }
 .wx-c { display: flex; align-items: center; gap: 6px; color: var(--m-muted); font-size: .85rem; padding-bottom: 14px; order: 2; }
 .wx-c ha-icon { --mdc-icon-size: 22px; }
@@ -2194,7 +2194,7 @@ ha-card.bare { background: none; border: none; box-shadow: none; border-radius: 
 .ev.first .ev-date { font-size: 2.6em; }
 .ev-time { grid-area: time; padding-left: 18px; font-size: calc(.95em * var(--maison-font-scale, 1)); }
 .ev.first .ev-time { font-size: calc(1.3em * var(--maison-font-scale, 1)); }
-.ev-e { grid-area: ev; padding-left: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ev-e { grid-area: ev; padding-left: 18px; overflow: hidden; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
 .ev.none { grid-template-areas: "ev"; color: var(--m-muted); }
 .ev.none .ev-e { padding: 0; }
 .ev.today { background: var(--m-pop); color: var(--m-on-pop); }
@@ -2396,6 +2396,31 @@ ha-card.bare { background: none; border: none; box-shadow: none; border-radius: 
 .hm-x ha-icon { --mdc-icon-size: 20px; color: var(--m-acc); }
 </style>`;
 
+/* ================================================================== titre */
+
+class MaisonTitreCard extends MaisonCard {
+  static get DEFAULTS() { return { theme: "maison" }; }
+
+  _cardClass() { return "bare"; }
+
+  _render(c, hass) {
+    const tap = this._cfgAct(c.tap_action, null);
+    return `<div class="ti${c.style === "subtitle" ? " sub" : ""}"${this._click(tap, null, c.title)}>` +
+      `${c.icon ? `<ha-icon icon="${esc(c.icon)}"></ha-icon>` : ""}<span>${tpl(c.title || "", hass)}</span></div>`;
+  }
+
+  getCardSize() { return 1; }
+
+  getGridOptions() { return { columns: "full", rows: "auto" }; }
+}
+MaisonTitreCard.STYLE = `<style>
+ha-card.bare { background: none; border: none; box-shadow: none; border-radius: 0; overflow: visible; }
+.ti { display: flex; align-items: center; gap: 8px; padding: 6px 4px 2px; font-size: 16px; font-weight: 400; line-height: 1.4; color: var(--m-text); }
+.ti.sub { font-size: 14px; color: var(--m-muted); }
+.ti ha-icon { --mdc-icon-size: 20px; color: var(--m-acc); }
+.ti[role="button"] { cursor: pointer; }
+</style>`;
+
 /* ================================================================= pop-up */
 
 /** Crée une carte Lovelace (y compris les cartes HA de base) à partir de sa configuration. */
@@ -2595,7 +2620,7 @@ const S = (name, options) => ({ name, selector: { select: { mode: "dropdown", op
 const allStrings = (v) => v === undefined || (Array.isArray(v) && v.every((x) => typeof x === "string"));
 
 const LABELS = {
-  theme: "Thème", name: "Nom", title: "Titre", tile: "Style des tuiles", show_date: "Afficher la date", icon: "Icône", entity: "Entité", entities: "Entités", columns: "Colonnes (vide = automatique)",
+  theme: "Thème", name: "Nom", title: "Titre", style: "Style", tile: "Style des tuiles", show_date: "Afficher la date", icon: "Icône", entity: "Entité", entities: "Entités", columns: "Colonnes (vide = automatique)",
   wrap: "Pastilles sur plusieurs lignes", align: "Alignement", area: "Pièce", temperature: "Température", humidity: "Humidité",
   media_player: "Lecteur multimédia", path: "Lien au clic (ex. #salon)", corner: "Coin carré", graph: "Courbe de température 24 h",
   height: "Hauteur (px)", row_height: "Hauteur d'une pièce (px)", slider: "Curseur de position", select: "Sélecteur de groupe (input_select)",
@@ -2647,6 +2672,8 @@ const EDITORS = {
     "Les icônes et liens se règlent en YAML (items:)."],
   "maison-horloge-card": [() => [B("show_date"), THEME_SELECT],
     "Le menu (items: nom, icône, lien) et les lignes d'info (info:) se règlent en YAML."],
+  "maison-titre-card": [() => [T("title"), I("icon"), S("style", [{ value: "title", label: "Titre" }, { value: "subtitle", label: "Sous-titre" }]), THEME_SELECT],
+    "Remplace la carte Titre de Home Assistant, avec la police et les couleurs du thème des Cartes Maison."],
   "maison-popup-card": [() => [T("hash"), T("title"), I("icon"), T("width_desktop"), N("auto_close", 0, 600000, 1000), THEME_SELECT],
     "Les cartes de la fenêtre se règlent en YAML (cards:). Un bouton avec « navigate » vers ce lien ouvre la fenêtre."],
 };
@@ -2676,6 +2703,8 @@ const CARDS = [
     () => ({ position: "inline", items: [{ icon: "mdi:home", path: "#" }, { icon: "mdi:lightbulb-group", path: "#lumieres" }, { icon: "mdi:window-shutter", path: "#volets" }] })],
   ["maison-horloge-card", MaisonHorlogeCard, "Maison · Horloge et menu", "Heure en grand, date, menu de navigation vertical et lignes d'info, pour une colonne latérale.",
     () => ({ items: [{ name: "home", icon: "mdi:dots-grid", path: "#" }, { name: "énergie", icon: "mdi:chart-areaspline", path: "/energy" }] })],
+  ["maison-titre-card", MaisonTitreCard, "Maison · Titre", "Titre de section, avec la police et les couleurs du thème (remplace la carte Titre).",
+    () => ({ title: "l a m p e s" })],
   ["maison-popup-card", MaisonPopupCard, "Maison · Fenêtre (pop-up)", "Une fenêtre qui s'ouvre sur un lien #… et contient d'autres cartes.",
     () => ({ hash: "#exemple", title: "Exemple", icon: "mdi:information-outline", cards: [{ type: "markdown", content: "Contenu de la fenêtre" }] })],
 ];
