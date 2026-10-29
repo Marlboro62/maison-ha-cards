@@ -36,19 +36,19 @@ Elles remplacent les tableaux de bord construits avec **button-card** et ses mod
 
 | Plan par étage | Alarme, volets, modes | Robot, voiture, imprimante 3D |
 | --- | --- | --- |
-| ![Plan](images/plan.png) | ![Maison](images/maison.png) | ![Appareils](images/appareils-sombre.png) |
+| ![Plan](https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/plan.png) | ![Maison](https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/maison.png) | ![Appareils](https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/appareils-sombre.png) |
 
 | Pastilles |
 | --- |
-| ![Pastilles](images/pastilles.png) |
+| ![Pastilles](https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/pastilles.png) |
 
 | Lumières (sombre) | Volets |
 | --- | --- |
-| ![Lumières](images/lumieres-sombre.png) | ![Volets](images/volets.png) |
+| ![Lumières](https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/lumieres-sombre.png) | ![Volets](https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/volets.png) |
 
 | Menu de la semaine | Jauge, météo, agenda, interrupteurs | Fenêtre |
 | --- | --- | --- |
-| ![Menu](images/menu.png) | ![Tuiles](images/tuiles.png) | ![Fenêtre](images/fenetre.png) |
+| ![Menu](https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/menu.png) | ![Tuiles](https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/tuiles.png) | ![Fenêtre](https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/fenetre.png) |
 
 *Aperçus réalisés avec des valeurs fictives.*
 
@@ -480,7 +480,7 @@ Toute carte qui navigue vers `#lumieres` (barre de navigation, pastille, pièce�
 | mod-card de navigation | `maison-navigation-card` |
 | bubble-card `pop-up` | `maison-popup-card` |
 
-Un exemple complet est dans [`exemples/`](exemples/).
+Un exemple complet est dans [`exemples/`](https://github.com/Marlboro62/maison-ha-cards/blob/main/exemples/).
 
 ## Support
 
