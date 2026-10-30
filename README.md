@@ -66,6 +66,7 @@ Elles remplacent les tableaux de bord construits avec **button-card** et ses mod
 | `custom:maison-robot-card` | **Aspirateur robot** : état, batterie, surface, durée, puissance, commandes, alerte « vider le bac » | le premier aspirateur et ses capteurs |
 | `custom:maison-voiture-card` | **Voiture électrique** : batterie, autonomie, kilométrage, charge, climatisation, verrouillage | Tesla (Fleet, Teslemetry, Tessie, Tesla custom) |
 | `custom:maison-telephones-card` | **Téléphones et tablettes** : batterie, charge, réseau, zone (sans adresse), détail au clic | tous les appareils de l'application Companion |
+| `custom:maison-batteries-card` | **Batteries voitures** (boîtiers BM6) : tension, charge, état, température, courbe de tension et trajets, détail au clic | toutes les batteries de l'intégration Battery Monitor BM6 |
 | `custom:maison-imprimante-card` | **Imprimante 3D** : températures, avancement, temps restant, caméra, pause / reprise / arrêt | Bambu Lab, Moonraker (Klipper), OctoPrint |
 | `custom:maison-menu-card` | **Menu de la semaine** : un jour par ligne, la recette du jour, la liste de courses | capteurs `sensor.menu_lundi…` |
 | `custom:maison-meteo-card` | **Météo** : température en grand, prévisions, courbe 24 h | la première entité `weather` |
@@ -356,6 +357,29 @@ Un appareil **muet** (éteint, application arrêtée), dont aucun capteur n'a é
 | Sombre, détail d'un appareil | Clair |
 | --- | --- |
 | <img src="https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/telephones-sombre.png" alt="Téléphones, détail" width="300"> | <img src="https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/telephones-clair.png" alt="Téléphones, clair" width="300"> |
+
+## Batteries voitures — `custom:maison-batteries-card`
+
+```yaml
+type: custom:maison-batteries-card
+```
+
+Les batteries 12 V suivies par un boîtier **BM6** (intégration [Battery Monitor BM6](https://github.com/Marlboro62/hass-bm6), HACS) sont trouvées seules, même si leurs entités ont été renommées ou masquées. Pour chacune :
+
+- **tension** en grand, en orange sous `volt_warn` (12,3 V), en rouge sous `volt_alert` (12,0 V) ;
+- **charge** en % avec sa barre, l'état (« Au repos », « En charge »), la température et l'heure de la dernière mesure ;
+- au-dessus de **13,2 V**, la carte affiche « Moteur en marche » et un éclair : l'alternateur recharge la batterie ;
+- une **courbe de tension** sur `hours` heures (48 par défaut), à l'échelle de la tension au repos pour voir la lente décharge, avec le **creux** de la période et le nombre de **trajets** (passages au-dessus de 13,2 V).
+
+Un clic sur une batterie affiche son détail : charge calculée et charge selon le BM6, état du BM6 (« Tension basse »…), température, baisses et hausses rapides de tension, signal Bluetooth et proxy qui la capte, dernière mesure. Un appui long ouvre la fiche de la tension.
+
+Une voiture partie (aucune mesure depuis `stale_hours` heures, 3 par défaut) passe en **gris** avec « Hors de portée depuis… ». L'en-tête compte les batteries en **tension basse** et **hors de portée**.
+
+`devices` (vide = toutes), `volt_warn`, `volt_alert`, `hours`, `show_curve` (`true`), `stale_hours` (`0` = jamais), `title`, `icon`.
+
+| Sombre, détail d'une batterie | Clair |
+| --- | --- |
+| <img src="https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/batteries-sombre.png" alt="Batteries voitures, détail" width="300"> | <img src="https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/batteries-clair.png" alt="Batteries voitures, clair" width="300"> |
 
 ## Imprimante 3D — `custom:maison-imprimante-card`
 

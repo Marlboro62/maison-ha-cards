@@ -862,5 +862,14 @@
     "type": "custom:maison-telephones-card"
    }
   ]
+ },
+ {
+  "name": "batteries",
+  "width": 560,
+  "cards": [
+   {
+    "type": "custom:maison-batteries-card"
+   }
+  ]
  }
 ]

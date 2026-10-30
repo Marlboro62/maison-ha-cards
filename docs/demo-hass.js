@@ -177,6 +177,21 @@
     s("sensor.energy_pellets_daily", 9, { unit_of_measurement: "kg" });
     s("sensor.niveau_cuve", 78, { unit_of_measurement: "%" });
 
+    // batteries de voiture suivies par des boîtiers BM6 (noms fictifs)
+    for (const [k, name, v, pct, pdev, cond, temp, rssi] of [["bm6_aa", "Batterie Clio", 12.52, 86, 74, "normal", 14, -78], ["bm6_bb", "Batterie Kangoo", 12.08, 40, 26, "low_voltage", 11, -90]]) {
+      devices[k] = { id: k, name, manufacturer: "BM6", model: "Battery Monitor BM6" };
+      const b = (suf, val, attrs = {}) => s(`sensor.${k}_${suf}`, val, attrs, { p: "bm6", dev: k, lc: iso(-6 * 60e3) });
+      b("tension", v, { unit_of_measurement: "V", device_class: "voltage", friendly_name: `${name} Tension` });
+      b("pour_cent", pct, { unit_of_measurement: "%", device_class: "battery", state_algorithm: "soc_sod", friendly_name: `${name} Charge` });
+      b("pourcentage_de_l_appareil", pdev, { unit_of_measurement: "%", device_class: "battery", friendly_name: `${name} Charge (BM6)` });
+      b("stan", "discharging", { friendly_name: `${name} État` });
+      b("condition_de_l_appareil", cond, { friendly_name: `${name} État (BM6)` });
+      b("temperature", temp, { unit_of_measurement: "°C", device_class: "temperature", friendly_name: `${name} Température` });
+      b("force_du_signal_rssi", rssi, { unit_of_measurement: "dBm", device_class: "signal_strength", friendly_name: `${name} Force du signal` });
+      b("lenteur", 0, { friendly_name: `${name} Baisse rapide de tension` });
+      b("acceleration", 1, { friendly_name: `${name} Hausse rapide de tension` });
+      b("skaner_bluetooth", "proxy-garage (AA:BB:CC:00:11:22)", { friendly_name: `${name} Scanner Bluetooth` });
+    }
     const areas = {};
     const floors = {
       rdc: { floor_id: "rdc", name: "Rez-de-chaussée", level: 0, icon: null },
@@ -196,6 +211,13 @@
       const base = num(st[id]?.state) ?? 20;
       const now = Date.now();
       const rows = [];
+      if (/_tension$/.test(id)) {
+        for (let i = 96; i >= 0; i--) {
+          const drive = i >= 40 && i <= 43;
+          rows.push({ state: String(drive ? 14.1 : (base + i * 0.0025 + Math.sin(i / 7) * 0.015).toFixed(2)), last_changed: new Date(now - i * 0.5 * H).toISOString() });
+        }
+        return [rows];
+      }
       for (let i = 48; i >= 0; i--) rows.push({ state: String((base + Math.sin(i / 5 + base) * 1.4 - i * 0.01).toFixed(1)), last_changed: new Date(now - i * 0.5 * H).toISOString() });
       return [rows];
     };

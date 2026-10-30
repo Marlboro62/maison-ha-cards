@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.2.6";
+const CARD_VERSION = "0.3.0-beta.1";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -277,13 +277,13 @@ function historyOf(hass, id, hours = 24) {
 }
 
 /** Courbe SVG (ligne et aire) des points, dans une boîte w × h. */
-function spark(pts, w = 300, h = 60, hours = 24) {
+function spark(pts, w = 300, h = 60, hours = 24, span = 1) {
   if (!pts || pts.length < 2) return "";
   const end = Date.now();
   const start = end - hours * 3600e3;
   const vs = pts.map((p) => p[1]);
   let lo = Math.min(...vs), hi = Math.max(...vs);
-  if (hi - lo < 1) { lo -= 0.5; hi += 0.5; }
+  if (hi - lo < span) { lo -= span / 2; hi += span / 2; }
   const x = (t) => ((Math.max(t, start) - start) / (end - start)) * w;
   const y = (v) => h - 4 - ((v - lo) / (hi - lo)) * (h - 8);
   let d = "";
@@ -1983,6 +1983,136 @@ MaisonTelephonesCard.STYLE = `<style>${DEVICE_STYLE}
 .tel-r b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
 </style>`;
 
+/* ===================================================== batteries de voiture */
+
+const BM_PLATFORMS = ["bm6", "bm2", "bm7", "battery_monitor"];
+const BM_FR = {
+  charging: "En charge", discharging: "Au repos", resting: "Au repos", idle: "Au repos", static: "Au repos", cranking: "Démarrage",
+  normal: "Normale", low_voltage: "Tension basse", high_voltage: "Tension haute", low_battery: "Batterie faible", engine_running: "Moteur en marche",
+};
+const BM_STATES = /^(charging|discharging|resting|idle|static|cranking)$/;
+
+class MaisonBatteriesCard extends MaisonCard {
+  static get DEFAULTS() { return { theme: "maison", title: "Batteries voitures", volt_warn: 12.3, volt_alert: 12, hours: 48, stale_hours: 3, show_curve: true }; }
+
+  /** Un appareil par batterie ; rôles d'après la classe du capteur, l'identifiant et la valeur (entités renommées comprises). */
+  _resolve(c, hass) {
+    const reg = hass.entities || {}, devs = hass.devices || {};
+    const only = [].concat(c.devices || []).map((x) => String(x).toLowerCase());
+    const map = {};
+    for (const [id, e] of Object.entries(reg)) {
+      if (!BM_PLATFORMS.includes(e.platform) || domainOf(id) !== "sensor" || !hass.states[id]) continue;
+      const dev = devs[e.device_id];
+      const name = dev?.name_by_user || dev?.name || "Batterie";
+      if (only.length && !only.includes(name.toLowerCase()) && !only.includes(e.device_id)) continue;
+      const d = (map[e.device_id || id] ||= { id: e.device_id || id, name, roles: {} });
+      const o = hass.states[id], a = o.attributes || {}, dc = a.device_class;
+      const txt = `${id} ${a.friendly_name || ""}`.toLowerCase();
+      const fromDevice = /device|appareil|\(bm\d\)/.test(txt);
+      let role = null;
+      if (dc === "voltage") role = "volt";
+      else if (dc === "temperature") role = "temp";
+      else if (dc === "signal_strength") role = "rssi";
+      else if (dc === "battery") role = fromDevice && !("state_algorithm" in a) ? "pct_dev" : "pct";
+      else if (/lenteur|deceleration|baisse/.test(txt)) role = "drop";
+      else if (/acceleration|hausse/.test(txt)) role = "rise";
+      else if (/skaner|scanner/.test(txt) || /\(([0-9a-f]{2}:){5}[0-9a-f]{2}\)/i.test(o.state)) role = "proxy";
+      else if (/condition/.test(txt) || (fromDevice && !BM_STATES.test(o.state))) role = "cond";
+      else if (BM_STATES.test(o.state) || /_(stan|state|etat)$/.test(id)) role = "state";
+      if (role && !d.roles[role]) d.roles[role] = id;
+    }
+    const list = Object.values(map).filter((d) => d.roles.volt || d.roles.pct);
+    list.sort((a, b) => (only.length ? only.indexOf(a.name.toLowerCase()) - only.indexOf(b.name.toLowerCase()) : 0) || a.name.localeCompare(b.name, "fr", { numeric: true }));
+    return { list };
+  }
+
+  _ids() { return this._resolved().list.flatMap((d) => Object.values(d.roles)); }
+
+  _render(c, hass) {
+    const { list } = this._resolved();
+    if (!list.length) return `<div class="empty"><b>Aucune batterie</b>Ajoutez vos boîtiers BM6 (intégration Battery Monitor BM6, HACS) ; ils sont trouvés seuls.</div>`;
+    const st = hass.states;
+    const val = (id) => { const s = id ? st[id]?.state : undefined; return s === undefined || BAD.has(s) ? null : s; };
+    const warn = num(c.volt_warn) ?? 12.3, alert = num(c.volt_alert) ?? 12;
+    const hours = num(c.hours) || 48;
+    const staleMs = (num(c.stale_hours) ?? 3) * 3600e3;
+    const open = this._ui.bat;
+    let lowN = 0, awayN = 0;
+    const tiles = list.map((d) => {
+      const r = d.roles;
+      const v = num(val(r.volt)), pct = num(val(r.pct)) ?? num(val(r.pct_dev));
+      const seenAt = Math.max(0, ...[r.volt, r.pct].filter(Boolean).map((id) => Math.max(Date.parse(st[id]?.last_reported || 0) || 0, Date.parse(st[id]?.last_updated || 0) || 0)));
+      const away = staleMs > 0 && seenAt > 0 && Date.now() - seenAt > staleMs;
+      const stTxt = String(val(r.state) || "").toLowerCase();
+      const cond = String(val(r.cond) || "").toLowerCase();
+      const running = v !== null && v >= 13.2;
+      const charging = !away && (stTxt === "charging" || running);
+      const level = v === null ? null : charging ? "ch" : v < alert ? "alert" : v < warn ? "warn" : "ok";
+      const lowV = !away && (level === "alert" || level === "warn" || cond === "low_voltage");
+      if (lowV) lowN++;
+      if (away) awayN++;
+      const color = away ? "var(--m-faint)" : level === "alert" ? "var(--m-red)" : level === "warn" || cond === "low_voltage" ? "var(--m-orange)" : charging ? "var(--m-acc)" : "var(--m-green)";
+      const temp = num(val(r.temp));
+      const sub = away
+        ? `Hors de portée ${relTime(new Date(seenAt).toISOString()) || ""}`.replace("il y a", "depuis")
+        : [running ? "Moteur en marche" : BM_FR[stTxt] || (stTxt ? stTxt.replace(/_/g, " ") : null), temp !== null ? `${fmt(temp)} °C` : null, seenAt ? relTime(new Date(seenAt).toISOString()) : null].filter(Boolean).join(" · ");
+      // courbe de tension et son creux sur la période
+      let graph = "";
+      if (c.show_curve !== false && r.volt) {
+        const pts = this._hist(r.volt, hours);
+        if (pts && pts.length > 1) {
+          // échelle de la tension au repos : les trajets (alternateur, 13,2 V et plus) sont écrêtés et comptés à part
+          const rest = pts.map((p) => p[1]).filter((x) => x < 13.2);
+          const lo = rest.length ? Math.min(...rest) : null, top = rest.length ? Math.max(...rest) : null;
+          let trips = 0;
+          pts.forEach((p, i) => { if (p[1] >= 13.2 && (i === 0 || pts[i - 1][1] < 13.2)) trips++; });
+          const shown = top === null ? pts : pts.map((p) => [p[0], Math.min(p[1], top + 0.15)]);
+          graph = `<div class="bat-g">${spark(shown, 300, 46, hours, 0.3)}<div class="bat-gl"><span>${hours} h</span><span>${[lo !== null ? `creux ${fmt(lo, 2)} V` : null, trips ? `${trips} trajet${trips > 1 ? "s" : ""}` : null].filter(Boolean).join(" · ")}</span></div></div>`;
+        }
+      }
+      const isOpen = open === d.id;
+      let detail = "";
+      if (isOpen) {
+        const proxy = val(r.proxy) ? String(val(r.proxy)).replace(/\s*\(([0-9a-f]{2}:){5}[0-9a-f]{2}\)\s*$/i, "") : null;
+        const rows = [
+          ["mdi:battery-heart-variant", "Charge calculée", pct !== null && num(val(r.pct)) !== null ? `${fmt(num(val(r.pct)))} %` : null, r.pct],
+          ["mdi:battery-outline", "Charge selon le BM6", num(val(r.pct_dev)) !== null ? `${fmt(num(val(r.pct_dev)))} %` : null, r.pct_dev],
+          ["mdi:car-battery", "État du BM6", cond ? BM_FR[cond] || cond.replace(/_/g, " ") : null, r.cond],
+          ["mdi:thermometer", "Température", temp !== null ? `${fmt(temp, 1)} °C` : null, r.temp],
+          ["mdi:trending-down", "Baisses rapides de tension", val(r.drop), r.drop],
+          ["mdi:trending-up", "Hausses rapides de tension", val(r.rise), r.rise],
+          ["mdi:bluetooth", "Signal", num(val(r.rssi)) !== null ? `${fmt(num(val(r.rssi)))} dBm${proxy ? ` via ${proxy}` : ""}` : proxy, r.rssi || r.proxy],
+          ["mdi:clock-outline", "Dernière mesure", seenAt ? new Date(seenAt).toLocaleString("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null, r.volt],
+        ].filter(([, , x]) => x !== null && x !== undefined && x !== "");
+        detail = `<div class="tel-d">${rows.map(([ic, l, x, id]) => `<div class="tel-r"${this._click({ action: "more-info", entity: id }, null, l)}><ha-icon icon="${ic}"></ha-icon><span>${l}</span><b>${esc(x)}</b></div>`).join("")}</div>`;
+      }
+      return `<div class="tel bat${isOpen ? " open" : ""}${level === "alert" && !away ? " low" : ""}${away ? " muted" : ""}">
+        <div class="tel-h"${this._click({ action: "ui", set: { bat: isOpen ? null : d.id } }, { action: "more-info", entity: r.volt || r.pct }, d.name)}>
+          <div class="tel-ic${charging ? " ch" : ""}"><ha-icon icon="mdi:car-battery" style="color:${color}"></ha-icon>${charging ? `<ha-icon class="tel-bolt" icon="mdi:lightning-bolt"></ha-icon>` : ""}</div>
+          <div class="tel-t"><div class="tel-n">${esc(d.name)}</div><div class="tel-s">${esc(sub)}</div></div>
+          <div class="tel-b bat-v" style="${lowV ? `color:${color}` : ""}">${v === null ? "—" : `${fmt(v, 2)}<span>V</span>`}</div>
+        </div>
+        ${pct !== null ? `<div class="bat-p"><div class="bar-p tel-bar"><i style="width:${Math.max(0, Math.min(100, pct))}%;background:${color}"></i></div><span>${fmt(pct)} %</span></div>` : ""}
+        ${graph}
+        ${detail}
+      </div>`;
+    }).join("");
+    const sum = [lowN ? `<span class="chipx warn">${lowN} tension basse</span>` : "", awayN ? `<span class="chipx">${awayN} hors de portée</span>` : ""].join("");
+    return `<div class="dv"><div class="dv-h"><div class="dv-ic"><ha-icon icon="${esc(c.icon || "mdi:car-battery")}"></ha-icon></div>` +
+      `<div class="dv-t"><div class="dv-n">${tpl(c.title ?? "Batteries voitures", hass)}</div><div class="dv-s">${list.length} batterie${list.length > 1 ? "s" : ""} 12 V</div></div>${sum ? `<div class="tel-sum">${sum}</div>` : ""}</div>` +
+      `<div class="tel-g">${tiles}</div></div>`;
+  }
+
+  getCardSize() { return 4; }
+}
+MaisonBatteriesCard.STYLE = MaisonTelephonesCard.STYLE + `<style>
+.bat-v { font-variant-numeric: tabular-nums; }
+.bat-p { display: flex; align-items: center; gap: 8px; } .bat-p .bar-p { flex: 1; } .bat-p span { font-size: .78rem; color: var(--m-muted); font-weight: 600; min-width: 36px; text-align: right; }
+.bat-g { height: 64px; display: grid; grid-template-rows: 46px auto; }
+.bat-gl { display: flex; justify-content: space-between; font-size: .7rem; color: var(--m-muted); }
+.bat.muted .bat-g, .bat.muted .bat-p { opacity: .5; }
+</style>`;
+
 /* ============================================================= imprimante */
 
 const PRN_FR = {
@@ -2800,6 +2930,8 @@ const LABELS = {
   show_camera: "Afficher la caméra", file: "Fichier en cours",
   devices: "Appareils (vide = tous)", low: "Batterie faible à partir de (%)", show_location: "Afficher la zone (maison, absent…)",
   stale_hours: "Appareil muet (gris) sans nouvelles depuis (heures, 0 = jamais)",
+  volt_warn: "Tension basse (orange) sous (V)", volt_alert: "Tension critique (rouge) sous (V)", hours: "Durée de la courbe de tension (heures)",
+  show_curve: "Courbe de tension",
 };
 
 const EDITORS = {
@@ -2825,6 +2957,9 @@ const EDITORS = {
     "Tesla (Fleet, Teslemetry, Tessie, Tesla custom) est détectée seule. Pour une autre voiture, choisissez au moins la batterie."],
   "maison-telephones-card": [() => [T("title"), I("icon"), { name: "devices", selector: { device: { integration: "mobile_app", multiple: true } } }, N("low", 0, 100), N("stale_hours", 0, 720), B("show_location"), THEME_SELECT],
     "Les téléphones et tablettes de l'application Home Assistant (Companion) sont trouvés seuls. Un clic sur un appareil affiche son détail."],
+  "maison-batteries-card": [() => [T("title"), I("icon"), { name: "devices", selector: { device: { integration: "bm6", multiple: true } } }, N("volt_warn", 10, 14, 0.1), N("volt_alert", 10, 14, 0.1),
+    N("hours", 6, 168), B("show_curve"), N("stale_hours", 0, 720), THEME_SELECT],
+    "Les boîtiers BM6 (intégration Battery Monitor BM6) sont trouvés seuls. Au-dessus de 13,2 V, le moteur tourne ou la batterie est en charge. Un clic sur une batterie affiche son détail."],
   "maison-imprimante-card": [() => [T("name"), T("prefix"), E("progress", "sensor"), E("remaining", "sensor"), E("stage", "sensor"), E("nozzle", "sensor"), E("bed", "sensor"),
     E("camera", "camera"), E("pause", "button"), E("resume", "button"), E("stop", "button"),
     S("camera_view", [{ value: "live", label: "Vidéo en direct" }, { value: "image", label: "Image" }]), B("show_camera"), THEME_SELECT],
@@ -2862,6 +2997,7 @@ const CARDS = [
   ["maison-robot-card", MaisonRobotCard, "Maison · Aspirateur robot", "État, batterie, surface, puissance et commandes de l'aspirateur.", () => ({})],
   ["maison-voiture-card", MaisonVoitureCard, "Maison · Voiture électrique", "Batterie, autonomie, kilométrage, charge, climatisation et verrouillage.", () => ({ name: "Voiture" })],
   ["maison-telephones-card", MaisonTelephonesCard, "Maison · Téléphones et tablettes", "Batterie, charge, réseau, stockage et zone des téléphones et tablettes (application Companion).", () => ({})],
+  ["maison-batteries-card", MaisonBatteriesCard, "Maison · Batteries voitures", "Tension, charge, état, température et courbe des batteries 12 V suivies par des boîtiers BM6.", () => ({})],
   ["maison-imprimante-card", MaisonImprimanteCard, "Maison · Imprimante 3D", "Bambu Lab, Klipper / Moonraker ou OctoPrint : températures, avancement, caméra et commandes.", () => ({})],
   ["maison-menu-card", MaisonMenuCard, "Maison · Menu de la semaine", "Le menu jour par jour, la recette du jour, et la liste de courses.", () => ({})],
   ["maison-meteo-card", MaisonMeteoCard, "Maison · Météo", "Température extérieure en grand, prévisions et courbe 24 h.", () => ({})],
