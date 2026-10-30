@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.4.0-beta.3";
+const CARD_VERSION = "0.4.0-beta.4";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -2171,7 +2171,12 @@ class MaisonTorqueCard extends MaisonCard {
     // batterie BM6 au nom du véhicule (« Batterie Renault » pour « Renault »)
     const bm = Object.entries(reg).filter(([id, e]) => ["bm6", "bm2", "bm7"].includes(e.platform) && hass.states[id]?.attributes?.device_class === "voltage");
     for (const d of Object.values(map)) {
-      const hit = bm.find(([, e]) => { const n = String(devs[e.device_id]?.name_by_user || devs[e.device_id]?.name || "").toLowerCase(); return n.includes(d.name.toLowerCase()); });
+      // « Batterie Renault » ↔ « Renault Laguna » : le nom de la batterie sans « Batterie » doit figurer dans celui de la voiture, ou l'inverse
+      const car = d.name.toLowerCase();
+      const hit = bm.find(([, e]) => {
+        const n = String(devs[e.device_id]?.name_by_user || devs[e.device_id]?.name || "").toLowerCase().replace(/\bbatterie\b|\bbattery\b/g, "").trim();
+        return n && (car.includes(n) || n.includes(car));
+      });
       if (hit) d.roles.battery = hit[0];
     }
     const list = Object.values(map);
