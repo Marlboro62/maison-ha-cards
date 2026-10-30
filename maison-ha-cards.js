@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.2.3-beta";
+const CARD_VERSION = "0.2.4-beta";
 
 /* ------------------------------------------------------------- utilitaires */
 
