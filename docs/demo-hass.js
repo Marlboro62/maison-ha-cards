@@ -65,7 +65,7 @@
       ["tab_leo", "Tablette Léo", "Xiaomi Pad 6", 100, "full", "home", "Maison", 18, "wifi"]];
     for (const [k, name, model, bat, bs, where, ssid, store, net] of phones) {
       devices[k] = { id: k, name, manufacturer: model.split(" ")[0], model: model.split(" ").slice(1).join(" ") };
-      const m = (dom, suf, v, attrs = {}) => s(`${dom}.${k}_${suf}`, v, attrs, { p: "mobile_app", dev: k });
+      const m = (dom, suf, v, attrs = {}) => s(`${dom}.${k}_${suf}`, v, attrs, { p: "mobile_app", dev: k, ...(k === "tab_salon" && o.phoneOff ? { lc: iso(-3 * D) } : {}) });
       m("sensor", "battery_level", bat, { unit_of_measurement: "%", device_class: "battery" });
       m("sensor", "battery_state", bs);
       m("binary_sensor", "is_charging", bs === "charging" ? "on" : "off");
@@ -81,7 +81,7 @@
       m("sensor", "current_version", "2026.10.1-full");
       if (k.startsWith("tel")) m("sensor", "daily_steps", k === "tel_paul" ? 6420 : 9810, { unit_of_measurement: "steps" });
       m("sensor", "ringer_mode", k === "tel_julie" ? "vibrate" : "normal");
-      s(`device_tracker.${k}`, where, { source_type: "gps" }, { p: "mobile_app", dev: k });
+      s(`device_tracker.${k}`, where, { source_type: "gps" }, { p: "mobile_app", dev: k, ...(k === "tab_salon" && o.phoneOff ? { lc: iso(-3 * D) } : {}) });
     }
     s("sensor.cuisine_alfred_battery", 80, { unit_of_measurement: "%", device_class: "battery" }, { p: "roborock", dev: "alfred" });
     s("input_boolean.vider_bac_poussiere", o.bac === false ? "off" : "on", { friendly_name: "Vider le bac" });

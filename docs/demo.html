@@ -207,7 +207,7 @@
     const [t, n] = state.tempo.split("|");
     const h = window.makeHass({
       dark: state.page === "dark", alarm: state.alarm, tempo: t, tempoNext: n, vacuum: state.vacuum,
-      printing: state.printing === "on", media: state.media === "on", chauffage: state.chauffage,
+      printing: state.printing === "on", media: state.media === "on", chauffage: state.chauffage, phoneOff: state.card === "telephones",
     });
     if (state.vacuum === "error") h.states["vacuum.alfred"].attributes = { ...h.states["vacuum.alfred"].attributes, error: "Brosse principale bloquée", status: "Erreur" };
     h.callService = (d, s, data, target) => {

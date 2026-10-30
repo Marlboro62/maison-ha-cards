@@ -349,7 +349,9 @@ Tous les téléphones et tablettes de l'application **Home Assistant (Companion)
 
 Un clic sur un appareil affiche son détail : santé et température de la batterie, temps avant charge complète, réseau Wi-Fi et signal, stockage libre, prochaine alarme, pas du jour, sonnerie, ne pas déranger, dernier redémarrage, version d'Android et de l'application. Un appui long ouvre la fiche de la batterie. Les capteurs désactivés dans l'application sont simplement absents.
 
-`devices` (liste d'appareils, vide = tous), `low` (batterie faible, `20` %), `show_location` (`true`), `title`, `icon`.
+Un appareil **muet** (éteint, application arrêtée), dont aucun capteur n'a été reçu depuis `stale_hours` heures, passe en **gris** avec « Pas de nouvelles depuis 3 j » : sa dernière batterie connue reste affichée en pâle, et il ne compte ni dans « en charge » ni dans « à recharger ». L'en-tête compte les appareils muets.
+
+`devices` (liste d'appareils, vide = tous), `low` (batterie faible, `20` %), `stale_hours` (appareil muet, `24` h, `0` = jamais), `show_location` (`true`), `title`, `icon`.
 
 | Sombre, détail d'un appareil | Clair |
 | --- | --- |

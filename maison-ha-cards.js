@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.2.5-beta";
+const CARD_VERSION = "0.2.6-beta";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -1852,7 +1852,7 @@ const TEL_FR = {
 };
 
 class MaisonTelephonesCard extends MaisonCard {
-  static get DEFAULTS() { return { theme: "maison", title: "Téléphones", low: 20, show_location: true }; }
+  static get DEFAULTS() { return { theme: "maison", title: "Téléphones", low: 20, show_location: true, stale_hours: 24 }; }
 
   _resolve(c, hass) {
     const reg = hass.entities || {}, devs = hass.devices || {};
@@ -1883,19 +1883,26 @@ class MaisonTelephonesCard extends MaisonCard {
     const st = hass.states;
     const val = (id) => { const s = id ? st[id]?.state : undefined; return s === undefined || BAD.has(s) ? null : s; };
     const low = num(c.low) ?? 20;
+    // appareil muet : aucun capteur reçu depuis stale_hours (appareil éteint, application arrêtée)
+    const staleMs = (num(c.stale_hours) ?? 24) * 3600e3;
     const info = list.map((d) => {
       const r = d.roles;
+      const seen = Math.max(0, ...Object.values(r).map((id) => {
+        const o = st[id];
+        return o ? Math.max(Date.parse(o.last_reported || 0) || 0, Date.parse(o.last_updated || 0) || 0, Date.parse(o.last_changed || 0) || 0) : 0;
+      }));
+      const muted = staleMs > 0 && seen > 0 && Date.now() - seen > staleMs;
       const bat = num(val(r.battery));
       const stTxt = String(val(r.state) || "").toLowerCase();
-      const charging = val(r.charging) === "on" || stTxt === "charging";
-      const full = stTxt === "full";
-      return { d, bat, charging, full, lowBat: bat !== null && bat <= low && !charging };
+      const charging = !muted && (val(r.charging) === "on" || stTxt === "charging");
+      const full = !muted && stTxt === "full";
+      return { d, bat, charging, full, muted, seen, lowBat: !muted && bat !== null && bat <= low && !charging };
     });
     const lowN = info.filter((x) => x.lowBat).length;
     const chN = info.filter((x) => x.charging).length;
     const open = this._ui.tel;
 
-    const tiles = info.map(({ d, bat, charging, full, lowBat }) => {
+    const tiles = info.map(({ d, bat, charging, full, lowBat, muted, seen }) => {
       const r = d.roles;
       const tr = r.tracker ? st[r.tracker] : null;
       const where = c.show_location !== false && tr && !BAD.has(tr.state)
@@ -1904,8 +1911,10 @@ class MaisonTelephonesCard extends MaisonCard {
       const ssid = val(r.wifi);
       const net = ssid && !/^<not connected>$|^non connecté$/i.test(ssid) ? "Wi-Fi" : TEL_FR[String(val(r.network) || "").toLowerCase()] || null;
       const charger = TEL_FR[String(val(r.charger) || "").toLowerCase()];
-      const sub = [charging ? `En charge${charger ? ` (${charger})` : ""}` : full ? "Chargé" : null, where, net].filter(Boolean).join(" · ");
-      const color = lowBat ? "var(--m-red)" : charging ? "var(--m-acc)" : levelBar(bat);
+      const sub = muted
+        ? `Pas de nouvelles ${relTime(new Date(seen).toISOString()) || ""}`.replace("il y a", "depuis")
+        : [charging ? `En charge${charger ? ` (${charger})` : ""}` : full ? "Chargé" : null, where, net].filter(Boolean).join(" · ");
+      const color = muted ? "var(--m-faint)" : lowBat ? "var(--m-red)" : charging ? "var(--m-acc)" : levelBar(bat);
       const isOpen = open === d.id;
       let detail = "";
       if (isOpen) {
@@ -1925,7 +1934,7 @@ class MaisonTelephonesCard extends MaisonCard {
         ].filter(([, , v]) => v !== null && v !== undefined && v !== "");
         detail = `<div class="tel-d">${rows.map(([ic, l, v, id]) => `<div class="tel-r"${this._click({ action: "more-info", entity: id }, null, l)}><ha-icon icon="${ic}"></ha-icon><span>${l}</span><b>${esc(v)}</b></div>`).join("")}</div>`;
       }
-      return `<div class="tel${isOpen ? " open" : ""}${lowBat ? " low" : ""}">
+      return `<div class="tel${isOpen ? " open" : ""}${lowBat ? " low" : ""}${muted ? " muted" : ""}"${muted ? ` title="Dernière valeur reçue : ${esc(new Date(seen).toLocaleString("fr-FR"))}"` : ""}>
         <div class="tel-h"${this._click({ action: "ui", set: { tel: isOpen ? null : d.id } }, { action: "more-info", entity: r.battery || r.tracker }, d.name)}>
           <div class="tel-ic${charging ? " ch" : ""}"><ha-icon icon="${d.tablet ? "mdi:tablet" : "mdi:cellphone"}"></ha-icon>${charging ? `<ha-icon class="tel-bolt" icon="mdi:lightning-bolt"></ha-icon>` : ""}</div>
           <div class="tel-t"><div class="tel-n">${esc(d.name)}</div><div class="tel-s">${esc(sub || d.model)}</div></div>
@@ -1936,7 +1945,8 @@ class MaisonTelephonesCard extends MaisonCard {
       </div>`;
     }).join("");
 
-    const sum = [lowN ? `<span class="chipx warn">${lowN} à recharger</span>` : "", chN ? `<span class="chipx on">${chN} en charge</span>` : ""].join("");
+    const mutedN = info.filter((x) => x.muted).length;
+    const sum = [lowN ? `<span class="chipx warn">${lowN} à recharger</span>` : "", chN ? `<span class="chipx on">${chN} en charge</span>` : "", mutedN ? `<span class="chipx">${mutedN} muet${mutedN > 1 ? "s" : ""}</span>` : ""].join("");
     return `<div class="dv"><div class="dv-h"><div class="dv-ic"><ha-icon icon="${esc(c.icon || "mdi:cellphone-link")}"></ha-icon></div>` +
       `<div class="dv-t"><div class="dv-n">${tpl(c.title ?? "Téléphones", hass)}</div><div class="dv-s">${list.length} appareil${list.length > 1 ? "s" : ""}</div></div>${sum ? `<div class="tel-sum">${sum}</div>` : ""}</div>` +
       `<div class="tel-g">${tiles}</div></div>`;
@@ -1953,6 +1963,8 @@ MaisonTelephonesCard.STYLE = `<style>${DEVICE_STYLE}
 .tel { background: var(--m-chip); border-radius: 16px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .tel.low { box-shadow: inset 0 0 0 2px var(--m-red); }
 .tel.open { grid-column: 1 / -1; }
+.tel.muted .tel-h, .tel.muted .tel-bar { opacity: .5; }
+.tel.muted .tel-ic ha-icon { color: var(--m-muted); }
 .tel-h { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .tel-ic { position: relative; width: 38px; height: 38px; border-radius: 50%; background: var(--m-card); display: grid; place-items: center; flex: none; }
 .tel-ic ha-icon { --mdc-icon-size: 22px; color: var(--m-acc); }
@@ -2787,6 +2799,7 @@ const LABELS = {
   position: "Position", hash: "Lien d'ouverture (#…)", width_desktop: "Largeur sur ordinateur (ex. 70%)", auto_close: "Fermeture automatique (ms)",
   show_camera: "Afficher la caméra", file: "Fichier en cours",
   devices: "Appareils (vide = tous)", low: "Batterie faible à partir de (%)", show_location: "Afficher la zone (maison, absent…)",
+  stale_hours: "Appareil muet (gris) sans nouvelles depuis (heures, 0 = jamais)",
 };
 
 const EDITORS = {
@@ -2810,7 +2823,7 @@ const EDITORS = {
   "maison-voiture-card": [() => [T("name"), I("icon"), E("battery", "sensor"), E("range", "sensor"), E("odometer", "sensor"), E("charging"), E("plugged", "binary_sensor"),
     E("charger_power", "sensor"), E("climate", "climate"), E("lock", "lock"), E("location", "device_tracker"), T("prefix"), THEME_SELECT],
     "Tesla (Fleet, Teslemetry, Tessie, Tesla custom) est détectée seule. Pour une autre voiture, choisissez au moins la batterie."],
-  "maison-telephones-card": [() => [T("title"), I("icon"), { name: "devices", selector: { device: { integration: "mobile_app", multiple: true } } }, N("low", 0, 100), B("show_location"), THEME_SELECT],
+  "maison-telephones-card": [() => [T("title"), I("icon"), { name: "devices", selector: { device: { integration: "mobile_app", multiple: true } } }, N("low", 0, 100), N("stale_hours", 0, 720), B("show_location"), THEME_SELECT],
     "Les téléphones et tablettes de l'application Home Assistant (Companion) sont trouvés seuls. Un clic sur un appareil affiche son détail."],
   "maison-imprimante-card": [() => [T("name"), T("prefix"), E("progress", "sensor"), E("remaining", "sensor"), E("stage", "sensor"), E("nozzle", "sensor"), E("bed", "sensor"),
     E("camera", "camera"), E("pause", "button"), E("resume", "button"), E("stop", "button"),
