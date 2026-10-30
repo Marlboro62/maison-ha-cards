@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.2.4-beta";
+const CARD_VERSION = "0.2.5-beta";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -1819,6 +1819,158 @@ MaisonVoitureCard.STYLE = `<style>${DEVICE_STYLE}
 .cl .rb { width: 40px; height: 40px; flex: none; }
 </style>`;
 
+/* ===================================================== téléphones et tablettes */
+
+/** Capteurs de l'application Companion (mobile_app), d'après la fin de l'identifiant. */
+const TEL_ROLES = [
+  ["battery", "sensor", /_battery_level$/],
+  ["state", "sensor", /_battery_state$/],
+  ["charging", "binary_sensor", /_is_charging$/],
+  ["charger", "sensor", /_charger_type$/],
+  ["temp", "sensor", /_battery_temperature$/],
+  ["health", "sensor", /_battery_health$/],
+  ["remaining", "sensor", /_remaining_charge_time$/],
+  ["wifi", "sensor", /_wifi_connection$|_wi_fi_connection$/],
+  ["signal", "sensor", /_wifi_signal_strength$|_wi_fi_signal_strength$/],
+  ["network", "sensor", /_network_type$/],
+  ["storage", "sensor", /_internal_storage$/],
+  ["alarm", "sensor", /_next_alarm$/],
+  ["reboot", "sensor", /_last_reboot$/],
+  ["os", "sensor", /_os_version$/],
+  ["app", "sensor", /_current_version$|_app_version$/],
+  ["steps", "sensor", /_daily_steps$|_steps_sensor$/],
+  ["dnd", "sensor", /_do_not_disturb_sensor$/],
+  ["ringer", "sensor", /_ringer_mode$/],
+  ["tracker", "device_tracker", /./],
+];
+const TEL_FR = {
+  charging: "En charge", discharging: "Sur batterie", full: "Chargé", not_charging: "Branché, ne charge pas", unknown: "—",
+  ac: "secteur", usb: "USB", wireless: "sans fil", none: "", dock: "station",
+  good: "Bonne", overheated: "Surchauffe", dead: "Morte", over_voltage: "Surtension", failed: "Défaillante", cold: "Froide",
+  normal: "Sonnerie", vibrate: "Vibreur", silent: "Silencieux", off: "Désactivé", priority_only: "Prioritaires seulement", alarms_only: "Alarmes seulement", total_silence: "Silence total",
+  wifi: "Wi-Fi", cellular: "Données mobiles", ethernet: "Ethernet", bluetooth: "Bluetooth", vpn: "VPN",
+};
+
+class MaisonTelephonesCard extends MaisonCard {
+  static get DEFAULTS() { return { theme: "maison", title: "Téléphones", low: 20, show_location: true }; }
+
+  _resolve(c, hass) {
+    const reg = hass.entities || {}, devs = hass.devices || {};
+    const only = [].concat(c.devices || []).map((x) => String(x).toLowerCase());
+    const map = {};
+    for (const [id, e] of Object.entries(reg)) {
+      if (e.platform !== "mobile_app" || !hass.states[id] || e.hidden) continue;
+      const dev = devs[e.device_id];
+      if (!dev) continue;
+      const name = dev.name_by_user || dev.name || "Téléphone";
+      if (only.length && !only.includes(name.toLowerCase()) && !only.includes(e.device_id)) continue;
+      const d = (map[e.device_id] ||= { id: e.device_id, name, model: [dev.manufacturer, dev.model].filter(Boolean).join(" "), roles: {} });
+      const role = TEL_ROLES.find(([, dom, re]) => dom === domainOf(id) && re.test(id));
+      if (role && !d.roles[role[0]]) d.roles[role[0]] = id;
+    }
+    const list = Object.values(map).filter((d) => d.roles.battery || d.roles.tracker);
+    // ordre : celui de « devices », sinon par nom
+    list.sort((a, b) => (only.length ? only.indexOf(a.name.toLowerCase()) - only.indexOf(b.name.toLowerCase()) : 0) || a.name.localeCompare(b.name, "fr", { numeric: true }));
+    for (const d of list) d.tablet = /tab|pad|tb-|tablette|tablet/i.test(`${d.name} ${d.model}`);
+    return { list };
+  }
+
+  _ids() { return this._resolved().list.flatMap((d) => Object.values(d.roles)); }
+
+  _render(c, hass) {
+    const { list } = this._resolved();
+    if (!list.length) return `<div class="empty"><b>Aucun téléphone</b>Installez l'application Home Assistant (Companion) sur vos téléphones et tablettes.</div>`;
+    const st = hass.states;
+    const val = (id) => { const s = id ? st[id]?.state : undefined; return s === undefined || BAD.has(s) ? null : s; };
+    const low = num(c.low) ?? 20;
+    const info = list.map((d) => {
+      const r = d.roles;
+      const bat = num(val(r.battery));
+      const stTxt = String(val(r.state) || "").toLowerCase();
+      const charging = val(r.charging) === "on" || stTxt === "charging";
+      const full = stTxt === "full";
+      return { d, bat, charging, full, lowBat: bat !== null && bat <= low && !charging };
+    });
+    const lowN = info.filter((x) => x.lowBat).length;
+    const chN = info.filter((x) => x.charging).length;
+    const open = this._ui.tel;
+
+    const tiles = info.map(({ d, bat, charging, full, lowBat }) => {
+      const r = d.roles;
+      const tr = r.tracker ? st[r.tracker] : null;
+      const where = c.show_location !== false && tr && !BAD.has(tr.state)
+        ? tr.state === "home" ? "À la maison" : tr.state === "not_home" ? "Absent" : (st[`zone.${tr.state}`]?.attributes?.friendly_name || tr.state.replace(/_/g, " "))
+        : null;
+      const ssid = val(r.wifi);
+      const net = ssid && !/^<not connected>$|^non connecté$/i.test(ssid) ? "Wi-Fi" : TEL_FR[String(val(r.network) || "").toLowerCase()] || null;
+      const charger = TEL_FR[String(val(r.charger) || "").toLowerCase()];
+      const sub = [charging ? `En charge${charger ? ` (${charger})` : ""}` : full ? "Chargé" : null, where, net].filter(Boolean).join(" · ");
+      const color = lowBat ? "var(--m-red)" : charging ? "var(--m-acc)" : levelBar(bat);
+      const isOpen = open === d.id;
+      let detail = "";
+      if (isOpen) {
+        const rows = [
+          ["mdi:heart-pulse", "Santé de la batterie", TEL_FR[String(val(r.health) || "").toLowerCase()] || val(r.health), r.health],
+          ["mdi:thermometer", "Température de la batterie", num(val(r.temp)) !== null ? `${fmt(num(val(r.temp)), 1)} °C` : null, r.temp],
+          ["mdi:timer-sand", "Charge complète", num(val(r.remaining)) !== null && charging ? hm(num(val(r.remaining))) : null, r.remaining],
+          ["mdi:wifi", "Réseau", ssid && net === "Wi-Fi" ? `Wi-Fi ${ssid}${num(val(r.signal)) !== null ? ` (${fmt(num(val(r.signal)))} dBm)` : ""}` : net, r.wifi || r.network],
+          ["mdi:harddisk", "Stockage interne", num(val(r.storage)) !== null ? `${fmt(num(val(r.storage)))} % libre` : null, r.storage],
+          ["mdi:alarm", "Prochaine alarme", val(r.alarm) ? new Date(val(r.alarm)).toLocaleString("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null, r.alarm],
+          ["mdi:walk", "Pas aujourd'hui", num(val(r.steps)) !== null ? fmt(num(val(r.steps))) : null, r.steps],
+          ["mdi:bell-outline", "Sonnerie", TEL_FR[String(val(r.ringer) || "").toLowerCase()] || null, r.ringer],
+          ["mdi:minus-circle-outline", "Ne pas déranger", TEL_FR[String(val(r.dnd) || "").toLowerCase()] || val(r.dnd), r.dnd],
+          ["mdi:restart", "Dernier redémarrage", val(r.reboot) ? relTime(val(r.reboot)) : null, r.reboot],
+          ["mdi:android", "Système", val(r.os) ? `Android ${val(r.os)}` : null, r.os],
+          ["mdi:cellphone-arrow-down", "Application", val(r.app), r.app],
+        ].filter(([, , v]) => v !== null && v !== undefined && v !== "");
+        detail = `<div class="tel-d">${rows.map(([ic, l, v, id]) => `<div class="tel-r"${this._click({ action: "more-info", entity: id }, null, l)}><ha-icon icon="${ic}"></ha-icon><span>${l}</span><b>${esc(v)}</b></div>`).join("")}</div>`;
+      }
+      return `<div class="tel${isOpen ? " open" : ""}${lowBat ? " low" : ""}">
+        <div class="tel-h"${this._click({ action: "ui", set: { tel: isOpen ? null : d.id } }, { action: "more-info", entity: r.battery || r.tracker }, d.name)}>
+          <div class="tel-ic${charging ? " ch" : ""}"><ha-icon icon="${d.tablet ? "mdi:tablet" : "mdi:cellphone"}"></ha-icon>${charging ? `<ha-icon class="tel-bolt" icon="mdi:lightning-bolt"></ha-icon>` : ""}</div>
+          <div class="tel-t"><div class="tel-n">${esc(d.name)}</div><div class="tel-s">${esc(sub || d.model)}</div></div>
+          <div class="tel-b${lowBat ? " low" : ""}">${bat === null ? "—" : `${fmt(bat)}<span>%</span>`}</div>
+        </div>
+        ${bat !== null ? `<div class="bar-p tel-bar"><i style="width:${Math.max(0, Math.min(100, bat))}%;background:${color}"></i></div>` : ""}
+        ${detail}
+      </div>`;
+    }).join("");
+
+    const sum = [lowN ? `<span class="chipx warn">${lowN} à recharger</span>` : "", chN ? `<span class="chipx on">${chN} en charge</span>` : ""].join("");
+    return `<div class="dv"><div class="dv-h"><div class="dv-ic"><ha-icon icon="${esc(c.icon || "mdi:cellphone-link")}"></ha-icon></div>` +
+      `<div class="dv-t"><div class="dv-n">${tpl(c.title ?? "Téléphones", hass)}</div><div class="dv-s">${list.length} appareil${list.length > 1 ? "s" : ""}</div></div>${sum ? `<div class="tel-sum">${sum}</div>` : ""}</div>` +
+      `<div class="tel-g">${tiles}</div></div>`;
+  }
+
+  getCardSize() { return 4; }
+}
+MaisonTelephonesCard.STYLE = `<style>${DEVICE_STYLE}
+.dv-n { letter-spacing: normal; }
+.tel-sum { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+@container (max-width: 480px) { .dv-h:has(.tel-sum) { flex-wrap: wrap; } .tel-sum { flex-basis: 100%; justify-content: flex-start; } }
+.chipx.warn { background: var(--m-red); color: var(--m-on-pop); }
+.tel-g { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.tel { background: var(--m-chip); border-radius: 16px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.tel.low { box-shadow: inset 0 0 0 2px var(--m-red); }
+.tel.open { grid-column: 1 / -1; }
+.tel-h { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.tel-ic { position: relative; width: 38px; height: 38px; border-radius: 50%; background: var(--m-card); display: grid; place-items: center; flex: none; }
+.tel-ic ha-icon { --mdc-icon-size: 22px; color: var(--m-acc); }
+.tel-ic .tel-bolt { position: absolute; right: -4px; bottom: -4px; --mdc-icon-size: 16px; color: var(--m-yellow); }
+.tel-t { flex: 1; min-width: 0; }
+.tel-n { font-weight: 600; font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tel-s { font-size: .76rem; color: var(--m-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tel-b { font-size: 1.5rem; font-weight: 300; white-space: nowrap; }
+.tel-b span { font-size: .55em; color: var(--m-muted); margin-left: 2px; }
+.tel-b.low { color: var(--m-red); font-weight: 500; }
+.tel-bar { height: 6px; }
+.tel-d { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 12px; padding-top: 4px; border-top: 1px solid var(--m-line); }
+.tel-r { display: flex; align-items: center; gap: 8px; font-size: .8rem; padding: 4px 2px; min-width: 0; }
+.tel-r ha-icon { --mdc-icon-size: 18px; color: var(--m-muted); flex: none; }
+.tel-r span { color: var(--m-muted); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tel-r b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
+</style>`;
+
 /* ============================================================= imprimante */
 
 const PRN_FR = {
@@ -2634,6 +2786,7 @@ const LABELS = {
   show_graph: "Courbe 24 h", max: "Nombre maximum", min: "Minimum", unit: "Unité", decimals: "Décimales", secondary: "Valeurs secondaires",
   position: "Position", hash: "Lien d'ouverture (#…)", width_desktop: "Largeur sur ordinateur (ex. 70%)", auto_close: "Fermeture automatique (ms)",
   show_camera: "Afficher la caméra", file: "Fichier en cours",
+  devices: "Appareils (vide = tous)", low: "Batterie faible à partir de (%)", show_location: "Afficher la zone (maison, absent…)",
 };
 
 const EDITORS = {
@@ -2657,6 +2810,8 @@ const EDITORS = {
   "maison-voiture-card": [() => [T("name"), I("icon"), E("battery", "sensor"), E("range", "sensor"), E("odometer", "sensor"), E("charging"), E("plugged", "binary_sensor"),
     E("charger_power", "sensor"), E("climate", "climate"), E("lock", "lock"), E("location", "device_tracker"), T("prefix"), THEME_SELECT],
     "Tesla (Fleet, Teslemetry, Tessie, Tesla custom) est détectée seule. Pour une autre voiture, choisissez au moins la batterie."],
+  "maison-telephones-card": [() => [T("title"), I("icon"), { name: "devices", selector: { device: { integration: "mobile_app", multiple: true } } }, N("low", 0, 100), B("show_location"), THEME_SELECT],
+    "Les téléphones et tablettes de l'application Home Assistant (Companion) sont trouvés seuls. Un clic sur un appareil affiche son détail."],
   "maison-imprimante-card": [() => [T("name"), T("prefix"), E("progress", "sensor"), E("remaining", "sensor"), E("stage", "sensor"), E("nozzle", "sensor"), E("bed", "sensor"),
     E("camera", "camera"), E("pause", "button"), E("resume", "button"), E("stop", "button"),
     S("camera_view", [{ value: "live", label: "Vidéo en direct" }, { value: "image", label: "Image" }]), B("show_camera"), THEME_SELECT],
@@ -2693,6 +2848,7 @@ const CARDS = [
     (h) => ({ entity: Object.keys(h?.states || {}).find((id) => domainOf(id) === "input_select") || "input_select.mode" })],
   ["maison-robot-card", MaisonRobotCard, "Maison · Aspirateur robot", "État, batterie, surface, puissance et commandes de l'aspirateur.", () => ({})],
   ["maison-voiture-card", MaisonVoitureCard, "Maison · Voiture électrique", "Batterie, autonomie, kilométrage, charge, climatisation et verrouillage.", () => ({ name: "Voiture" })],
+  ["maison-telephones-card", MaisonTelephonesCard, "Maison · Téléphones et tablettes", "Batterie, charge, réseau, stockage et zone des téléphones et tablettes (application Companion).", () => ({})],
   ["maison-imprimante-card", MaisonImprimanteCard, "Maison · Imprimante 3D", "Bambu Lab, Klipper / Moonraker ou OctoPrint : températures, avancement, caméra et commandes.", () => ({})],
   ["maison-menu-card", MaisonMenuCard, "Maison · Menu de la semaine", "Le menu jour par jour, la recette du jour, et la liste de courses.", () => ({})],
   ["maison-meteo-card", MaisonMeteoCard, "Maison · Météo", "Température extérieure en grand, prévisions et courbe 24 h.", () => ({})],

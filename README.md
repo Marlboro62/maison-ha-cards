@@ -65,6 +65,7 @@ Elles remplacent les tableaux de bord construits avec **button-card** et ses mod
 | `custom:maison-mode-card` | **Sélecteur de mode** : un `input_select` ou `select` en boutons (chauffage, ballon, activités…) | icônes devinées depuis les options |
 | `custom:maison-robot-card` | **Aspirateur robot** : état, batterie, surface, durée, puissance, commandes, alerte « vider le bac » | le premier aspirateur et ses capteurs |
 | `custom:maison-voiture-card` | **Voiture électrique** : batterie, autonomie, kilométrage, charge, climatisation, verrouillage | Tesla (Fleet, Teslemetry, Tessie, Tesla custom) |
+| `custom:maison-telephones-card` | **Téléphones et tablettes** : batterie, charge, réseau, zone (sans adresse), détail au clic | tous les appareils de l'application Companion |
 | `custom:maison-imprimante-card` | **Imprimante 3D** : températures, avancement, temps restant, caméra, pause / reprise / arrêt | Bambu Lab, Moonraker (Klipper), OctoPrint |
 | `custom:maison-menu-card` | **Menu de la semaine** : un jour par ligne, la recette du jour, la liste de courses | capteurs `sensor.menu_lundi…` |
 | `custom:maison-meteo-card` | **Météo** : température en grand, prévisions, courbe 24 h | la première entité `weather` |
@@ -337,6 +338,22 @@ battery: sensor.tesla_battery       # le reste est trouvé sur le même appareil
 ```
 
 `range`, `odometer`, `charging` (binary_sensor ou état de charge texte), `plugged`, `charger_power`, `charge_limit`, `climate`, `inside_temp`, `lock` (déverrouillage en deux clics), `location`, `charge_switch`, `prefix`, `icon`.
+
+## Téléphones et tablettes — `custom:maison-telephones-card`
+
+```yaml
+type: custom:maison-telephones-card
+```
+
+Tous les téléphones et tablettes de l'application **Home Assistant (Companion)** sont trouvés seuls. Pour chacun : nom, batterie en grand avec sa barre (verte, orange, rouge sous `low`, couleur d'accent en charge), éclair en charge, et sous le nom l'état de charge, la **zone** (« À la maison », « Absent » ou le nom de la zone, jamais l'adresse ni la carte) et le réseau (Wi-Fi ou données mobiles). L'en-tête compte les appareils **à recharger** et **en charge**.
+
+Un clic sur un appareil affiche son détail : santé et température de la batterie, temps avant charge complète, réseau Wi-Fi et signal, stockage libre, prochaine alarme, pas du jour, sonnerie, ne pas déranger, dernier redémarrage, version d'Android et de l'application. Un appui long ouvre la fiche de la batterie. Les capteurs désactivés dans l'application sont simplement absents.
+
+`devices` (liste d'appareils, vide = tous), `low` (batterie faible, `20` %), `show_location` (`true`), `title`, `icon`.
+
+| Sombre, détail d'un appareil | Clair |
+| --- | --- |
+| <img src="https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/telephones-sombre.png" alt="Téléphones, détail" width="300"> | <img src="https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/telephones-clair.png" alt="Téléphones, clair" width="300"> |
 
 ## Imprimante 3D — `custom:maison-imprimante-card`
 

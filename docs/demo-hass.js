@@ -5,7 +5,7 @@
   const img = (bg, t) => "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="${bg}"/><stop offset="1" stop-color="#222"/></linearGradient></defs><rect width="320" height="180" fill="url(#g)"/><text x="160" y="100" font-size="26" text-anchor="middle" fill="#fff" font-family="Arial">${t}</text></svg>`);
 
   window.makeHass = (o = {}) => {
-    const st = {}, ent = {};
+    const st = {}, ent = {}, devices = {};
     const s = (id, state, attrs = {}, reg = {}) => {
       st[id] = { entity_id: id, state: String(state), attributes: attrs, last_changed: reg.lc || iso(-2 * H), last_updated: reg.lc || iso(-2 * H) };
       ent[id] = { entity_id: id, platform: reg.p || "demo", translation_key: reg.k || null, device_id: reg.dev || null, area_id: reg.area || null, entity_category: reg.cat || null };
@@ -58,6 +58,31 @@
     s("vacuum.alfred", o.vacuum || "cleaning", { battery_level: 80, fan_speed: "Standard", fan_speed_list: ["Silencieux", "Standard", "Fort", "Turbo"], supported_features: 16383, friendly_name: "Alfred", status: "Nettoyage" }, { p: "roborock", dev: "alfred", area: "cuisine" });
     s("sensor.cuisine_alfred_cleaning_area", 24, { unit_of_measurement: "m²" }, { p: "roborock", dev: "alfred" });
     s("sensor.cuisine_alfred_cleaning_time", 31, { unit_of_measurement: "min" }, { p: "roborock", dev: "alfred" });
+    // téléphones et tablettes (application Companion, noms fictifs)
+    const phones = [["tel_paul", "Téléphone Paul", "Google Pixel 8", 82, "discharging", "home", "Maison-5G", 54, "Wi-Fi"],
+      ["tel_julie", "Téléphone Julie", "Samsung Galaxy S23", 14, "discharging", "not_home", null, 31, "cellular"],
+      ["tab_salon", "Tablette salon", "Lenovo Tab M8", 63, "charging", "home", "Maison", 72, "wifi"],
+      ["tab_leo", "Tablette Léo", "Xiaomi Pad 6", 100, "full", "home", "Maison", 18, "wifi"]];
+    for (const [k, name, model, bat, bs, where, ssid, store, net] of phones) {
+      devices[k] = { id: k, name, manufacturer: model.split(" ")[0], model: model.split(" ").slice(1).join(" ") };
+      const m = (dom, suf, v, attrs = {}) => s(`${dom}.${k}_${suf}`, v, attrs, { p: "mobile_app", dev: k });
+      m("sensor", "battery_level", bat, { unit_of_measurement: "%", device_class: "battery" });
+      m("sensor", "battery_state", bs);
+      m("binary_sensor", "is_charging", bs === "charging" ? "on" : "off");
+      m("sensor", "charger_type", bs === "charging" ? "ac" : "none");
+      m("sensor", "battery_temperature", 27.5 + bat / 20, { unit_of_measurement: "°C" });
+      m("sensor", "battery_health", "good");
+      m("sensor", "wifi_connection", ssid || "<not connected>");
+      m("sensor", "network_type", net);
+      m("sensor", "internal_storage", store, { unit_of_measurement: "%" });
+      m("sensor", "next_alarm", k === "tel_paul" ? iso(14 * H) : "unavailable", { device_class: "timestamp" });
+      m("sensor", "last_reboot", iso(-(4 + bat / 10) * D), { device_class: "timestamp" });
+      m("sensor", "os_version", "14");
+      m("sensor", "current_version", "2026.10.1-full");
+      if (k.startsWith("tel")) m("sensor", "daily_steps", k === "tel_paul" ? 6420 : 9810, { unit_of_measurement: "steps" });
+      m("sensor", "ringer_mode", k === "tel_julie" ? "vibrate" : "normal");
+      s(`device_tracker.${k}`, where, { source_type: "gps" }, { p: "mobile_app", dev: k });
+    }
     s("sensor.cuisine_alfred_battery", 80, { unit_of_measurement: "%", device_class: "battery" }, { p: "roborock", dev: "alfred" });
     s("input_boolean.vider_bac_poussiere", o.bac === false ? "off" : "on", { friendly_name: "Vider le bac" });
     s("switch.deshumidificateur", "on", {});
@@ -177,7 +202,7 @@
     function num(v) { const n = Number(v); return Number.isFinite(n) ? n : null; }
     const forecast = [0, 1, 2, 3, 4, 5].map((i) => ({ datetime: iso(i * D), condition: ["partlycloudy", "rainy", "cloudy", "sunny", "sunny", "pouring"][i], temperature: [16, 13, 14, 18, 19, 12][i], templow: [8, 9, 7, 6, 9, 8][i] }));
     const hass = {
-      states: st, entities: ent, areas, floors, devices: {},
+      states: st, entities: ent, areas, floors, devices,
       themes: { darkMode: !!o.dark }, language: "fr", user: { name: "Test" },
       callService: (d, sv, data, target) => { calls.push([`${d}.${sv}`, data, target]); window.__calls = calls; return Promise.resolve(); },
       callApi: (m, path) => {

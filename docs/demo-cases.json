@@ -853,5 +853,14 @@
     ]
    }
   ]
+ },
+ {
+  "name": "telephones",
+  "width": 560,
+  "cards": [
+   {
+    "type": "custom:maison-telephones-card"
+   }
+  ]
  }
 ]
