@@ -192,6 +192,27 @@
       b("acceleration", 1, { friendly_name: `${name} Hausse rapide de tension` });
       b("skaner_bluetooth", "proxy-garage (AA:BB:CC:00:11:22)", { friendly_name: `${name} Scanner Bluetooth` });
     }
+    // voitures suivies par Torque Pro (intégration Torque OBD-II, noms fictifs)
+    for (const [k, name, live] of [["tq_clio", "Clio", true], ["tq_kangoo", "Kangoo", false]]) {
+      devices[k] = { id: k, name, manufacturer: "Torque Pro", model: "OBD-II" };
+      const q = (suf, pid, val, unit, fn, lc) => s(`sensor.${k}_${suf}`, val, { pid, friendly_name: `${name} ${fn}`, ...(unit ? { unit_of_measurement: unit } : {}) }, { p: "torque_obd", dev: k, lc });
+      s(`binary_sensor.${k}_torque_connecte`, live ? "on" : "off", { device_class: "connectivity", friendly_name: `${name} Torque connecté` }, { p: "torque_obd", dev: k });
+      s(`device_tracker.${k}_position`, live ? "not_home" : "home", { source_type: "gps", friendly_name: `${name} Position` }, { p: "torque_obd", dev: k });
+      q("vitesse_du_vehicule", "kd", live ? 82 : 0, "km/h", "Vitesse du véhicule");
+      q("regime_moteur", "kc", live ? 2150 : 0, "RPM", "Régime moteur");
+      q("temperature_du_liquide_de_refroidissement", "k5", live ? 89 : 31, "°C", "Température du liquide de refroidissement");
+      q("litres_aux_100_km_instantane", "kff1207", live ? 5.8 : 0, "L/100km", "Litres aux 100 km (instantané)");
+      q("distance_du_trajet", "kff1204", live ? 14.2 : 23.6, "km", "Distance du trajet", live ? undefined : iso(-5 * H));
+      q("duree_du_trajet_en_mouvement", "kff1268", live ? 960 : 1680, "s", "Durée du trajet (en mouvement)");
+      q("vitesse_moyenne_du_trajet", "kff1272", live ? 53 : 51, "km/h", "Vitesse moyenne du trajet (à l'arrêt ou en mouvement)");
+      q("litres_100_km_moyen_du_trajet", "kff1208", live ? 6.1 : 7.4, "L/100km", "Litres/100 km moyen du trajet");
+      q("litres_aux_100_km_moyenne_long_terme", "kff5203", live ? 6.4 : 7.9, "L/100km", "Litres aux 100 km (moyenne long terme)");
+      q("tension_adaptateur_obd", "kff1238", live ? 14.1 : 12.1, "V", "Tension (adaptateur OBD)");
+      q("charge_moteur", "k4", live ? 34 : 0, "%", "Charge moteur");
+      q("distance_parcourue_avec_voyant_mil_cel_allume", "k21", live ? 0 : 37, "km", "Distance parcourue avec voyant MIL/CEL allumé");
+      q("kilometrage_total", "k222006", live ? 84210 : 142380, "km", `${live ? "Clio" : "Kangoo"} - Kilométrage total`);
+      if (live) q("niveau_de_carburant", "k2f", 58, "%", "Niveau de carburant");
+    }
     const areas = {};
     const floors = {
       rdc: { floor_id: "rdc", name: "Rez-de-chaussée", level: 0, icon: null },

@@ -871,5 +871,14 @@
     "type": "custom:maison-batteries-card"
    }
   ]
+ },
+ {
+  "name": "voitures",
+  "width": 640,
+  "cards": [
+   {
+    "type": "custom:maison-torque-card"
+   }
+  ]
  }
 ]

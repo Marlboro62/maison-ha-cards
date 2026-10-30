@@ -67,6 +67,7 @@ Elles remplacent les tableaux de bord construits avec **button-card** et ses mod
 | `custom:maison-voiture-card` | **Voiture électrique** : batterie, autonomie, kilométrage, charge, climatisation, verrouillage | Tesla (Fleet, Teslemetry, Tessie, Tesla custom) |
 | `custom:maison-telephones-card` | **Téléphones et tablettes** : batterie, charge, réseau, zone (sans adresse), détail au clic | tous les appareils de l'application Companion |
 | `custom:maison-batteries-card` | **Batteries voitures** (boîtiers BM6) : tension, charge, état, température, courbe de tension et trajets, détail au clic | toutes les batteries de l'intégration Battery Monitor BM6 |
+| `custom:maison-torque-card` | **Voitures (Torque)** : en route (vitesse, régime, température, consommation) ou dernier trajet, voyant moteur, carburant, kilométrage, batterie BM6, tous les capteurs au clic | tous les véhicules de l'intégration Torque OBD-II |
 | `custom:maison-imprimante-card` | **Imprimante 3D** : températures, avancement, temps restant, caméra, pause / reprise / arrêt | Bambu Lab, Moonraker (Klipper), OctoPrint |
 | `custom:maison-menu-card` | **Menu de la semaine** : un jour par ligne, la recette du jour, la liste de courses | capteurs `sensor.menu_lundi…` |
 | `custom:maison-meteo-card` | **Météo** : température en grand, prévisions, courbe 24 h | la première entité `weather` |
@@ -380,6 +381,27 @@ Une voiture partie (aucune mesure depuis `stale_hours` heures, 3 par défaut) pa
 | Sombre, détail d'une batterie | Clair |
 | --- | --- |
 | <img src="https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/batteries-sombre.png" alt="Batteries voitures, détail" width="300"> | <img src="https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/batteries-clair.png" alt="Batteries voitures, clair" width="300"> |
+
+## Voitures (Torque) — `custom:maison-torque-card`
+
+```yaml
+type: custom:maison-torque-card
+```
+
+Les voitures de l'intégration [Torque OBD-II](https://github.com/Marlboro62/Home-Assistant-Torque-OBDII-2027) (application Torque Pro) sont trouvées seules. Chaque capteur est reconnu par sa clé Torque (attribut `pid`), même si l'entité a été renommée. Pour chaque voiture :
+
+- **en route** (Torque connecté) : vitesse, régime, température du liquide de refroidissement (rouge à partir de 105 °C) et consommation instantanée ;
+- **à l'arrêt** : le **dernier trajet** (distance, durée en mouvement, vitesse moyenne, consommation) et depuis quand ;
+- la **zone** (« À la maison », « Absente » ou le nom de la zone, jamais l'adresse ni la carte) ;
+- des pastilles : **voyant moteur** (distance parcourue voyant allumé, en rouge), **batterie** (tension du boîtier BM6 dont le nom contient celui de la voiture, ex. « Batterie Clio » pour « Clio »), **carburant**, **kilométrage** (PID propre au véhicule, ex. « Laguna - Kilométrage total ») et consommation moyenne.
+
+Un clic sur une voiture liste **tous ses capteurs** par ordre alphabétique ; un appui long ouvre la fiche « Torque connecté ».
+
+`devices` (vide = toutes), `show_location` (`true`), `show_battery` (`true`), `title`, `icon`.
+
+| Sombre, tous les capteurs | Clair |
+| --- | --- |
+| <img src="https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/voitures-sombre.png" alt="Voitures Torque, détail" width="300"> | <img src="https://raw.githubusercontent.com/Marlboro62/maison-ha-cards/main/images/voitures-clair.png" alt="Voitures Torque, clair" width="300"> |
 
 ## Imprimante 3D — `custom:maison-imprimante-card`
 

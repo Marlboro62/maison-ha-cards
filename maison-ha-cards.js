@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.3.0";
+const CARD_VERSION = "0.4.0-beta.1";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -2113,6 +2113,149 @@ MaisonBatteriesCard.STYLE = MaisonTelephonesCard.STYLE + `<style>
 .bat.muted .bat-g, .bat.muted .bat-p { opacity: .5; }
 </style>`;
 
+/* ================================================ voitures thermiques (Torque) */
+
+// rôles d'après la clé Torque normalisée (attribut « pid » des capteurs de l'intégration Torque OBD-II)
+const TQ_PIDS = {
+  k0d: "speed", kff1001: "gps_speed", k0c: "rpm", k05: "coolant", k0f: "intake", k04: "load", k11: "throttle", k2f: "fuel",
+  k21: "mil_km", kff1238: "obd_volt", kff1204: "trip_km", kff1268: "trip_moving", kff1266: "trip_time", kff1272: "trip_avg",
+  kff1208: "trip_l100", kff1207: "l100", kff5203: "l100_long", kff1258: "co2", kff1225: "torque", kff1226: "hp", kff129a: "phone",
+};
+const tqPid = (p) => {
+  p = String(p || "").toLowerCase();
+  const h = p.slice(1);
+  return p.startsWith("k") && /^[0-9a-f]+$/.test(h) && h.length < 2 ? `k${h.padStart(2, "0")}` : p;
+};
+
+class MaisonTorqueCard extends MaisonCard {
+  static get DEFAULTS() { return { theme: "maison", title: "Voitures", show_battery: true, show_location: true }; }
+
+  _resolve(c, hass) {
+    const reg = hass.entities || {}, devs = hass.devices || {};
+    const only = [].concat(c.devices || []).map((x) => String(x).toLowerCase());
+    const map = {};
+    for (const [id, e] of Object.entries(reg)) {
+      if (e.platform !== "torque_obd" || !hass.states[id] || !e.device_id) continue;
+      const dev = devs[e.device_id];
+      const name = dev?.name_by_user || dev?.name || "Voiture";
+      if (only.length && !only.includes(name.toLowerCase()) && !only.includes(e.device_id)) continue;
+      const d = (map[e.device_id] ||= { id: e.device_id, name, roles: {}, all: [] });
+      const o = hass.states[id], dom = domainOf(id);
+      if (dom === "binary_sensor") d.roles.connected ||= id;
+      else if (dom === "device_tracker") d.roles.tracker ||= id;
+      else if (dom === "sensor") {
+        const pid = o.attributes?.pid;
+        if (!pid) continue; // URL Torque
+        d.all.push(id);
+        const role = TQ_PIDS[tqPid(pid)];
+        const fn = String(o.attributes.friendly_name || "").toLowerCase();
+        if (role && !d.roles[role]) d.roles[role] = id;
+        // PID propres au véhicule (« Laguna - Kilométrage total »…)
+        else if (/kilom[ée]trage total|odom/.test(fn)) d.roles.odometer ||= id;
+        else if (/carburant dans le r[ée]servoir/.test(fn)) d.roles.tank ||= id;
+      }
+    }
+    // batterie BM6 au nom du véhicule (« Batterie Renault » pour « Renault »)
+    const bm = Object.entries(reg).filter(([id, e]) => ["bm6", "bm2", "bm7"].includes(e.platform) && hass.states[id]?.attributes?.device_class === "voltage");
+    for (const d of Object.values(map)) {
+      const hit = bm.find(([, e]) => { const n = String(devs[e.device_id]?.name_by_user || devs[e.device_id]?.name || "").toLowerCase(); return n.includes(d.name.toLowerCase()); });
+      if (hit) d.roles.battery = hit[0];
+    }
+    const list = Object.values(map);
+    list.sort((a, b) => (only.length ? only.indexOf(a.name.toLowerCase()) - only.indexOf(b.name.toLowerCase()) : 0) || a.name.localeCompare(b.name, "fr", { numeric: true }));
+    return { list };
+  }
+
+  _ids() { return this._resolved().list.flatMap((d) => Object.values(d.roles)); }
+
+  _render(c, hass) {
+    const { list } = this._resolved();
+    if (!list.length) return `<div class="empty"><b>Aucune voiture</b>Ajoutez vos véhicules avec l'intégration Torque OBD-II, puis faites un trajet avec Torque Pro.</div>`;
+    const st = hass.states;
+    const val = (id) => { const s = id ? st[id]?.state : undefined; return s === undefined || BAD.has(s) ? null : s; };
+    const n = (id) => num(val(id));
+    const open = this._ui.car;
+    let driving = 0, mil = 0;
+    const cars = list.map((d) => {
+      const r = d.roles;
+      const live = val(r.connected) === "on";
+      if (live) driving++;
+      const milKm = n(r.mil_km);
+      if (milKm) mil++;
+      const tr = r.tracker ? st[r.tracker] : null;
+      const where = c.show_location !== false && tr && !BAD.has(tr.state)
+        ? tr.state === "home" ? "À la maison" : tr.state === "not_home" ? "Absente" : (st[`zone.${tr.state}`]?.attributes?.friendly_name || tr.state.replace(/_/g, " "))
+        : null;
+      const tripAt = r.trip_km && st[r.trip_km] ? st[r.trip_km].last_changed : null;
+      const sub = live ? ["En route", where].filter(Boolean).join(" · ")
+        : [where, tripAt ? `dernier trajet ${relTime(tripAt)}` : null].filter(Boolean).join(" · ");
+      const tile = (l, v, u, id, cls = "") => v === null ? "" : `<div class="vt2 ${cls}"${this._click({ action: "more-info", entity: id }, null, l)}><div class="vt2-l">${l}</div><div class="vt2-v">${v}${u ? `<span>${u}</span>` : ""}</div></div>`;
+      let main;
+      if (live) {
+        const cool = n(r.coolant);
+        main = `<div class="dv-g">${tile("Vitesse", n(r.speed) !== null ? fmt(n(r.speed)) : n(r.gps_speed) !== null ? fmt(n(r.gps_speed)) : null, "km/h", r.speed || r.gps_speed)}${tile("Régime", n(r.rpm) !== null ? fmt(n(r.rpm)) : null, "tr/min", r.rpm)}` +
+          `${tile("Liquide de refroidissement", cool !== null ? fmt(cool) : null, "°C", r.coolant, cool !== null && cool >= 105 ? "tq-hot" : "")}${tile("Consommation", n(r.l100) !== null ? fmt(n(r.l100), 1) : null, "L/100", r.l100)}</div>`;
+      } else {
+        const mov = n(r.trip_moving) ?? n(r.trip_time);
+        main = `<div class="dv-g">${tile("Dernier trajet", n(r.trip_km) !== null ? fmt(n(r.trip_km), 1) : null, "km", r.trip_km)}${tile("Durée", mov !== null ? hm(mov / 60) : null, "", r.trip_moving || r.trip_time)}` +
+          `${tile("Vitesse moyenne", n(r.trip_avg) !== null ? fmt(n(r.trip_avg)) : null, "km/h", r.trip_avg)}${tile("Consommation", n(r.trip_l100) !== null ? fmt(n(r.trip_l100), 1) : n(r.l100_long) !== null ? fmt(n(r.l100_long), 1) : null, "L/100", r.trip_l100 || r.l100_long)}</div>`;
+      }
+      const bat = c.show_battery !== false ? n(r.battery) : null;
+      const chips = [
+        milKm ? `<span class="chipx warn"${this._click({ action: "more-info", entity: r.mil_km }, null, "Voyant moteur")}>Voyant moteur · ${fmt(milKm)} km</span>` : "",
+        bat !== null ? `<span class="chipx${bat < 12 ? " warn" : ""}"${this._click({ action: "more-info", entity: r.battery }, null, "Batterie")}>Batterie ${fmt(bat, 2)} V</span>` : "",
+        n(r.fuel) !== null ? `<span class="chipx"${this._click({ action: "more-info", entity: r.fuel }, null, "Carburant")}>Carburant ${fmt(n(r.fuel))} %</span>` : n(r.tank) !== null ? `<span class="chipx"${this._click({ action: "more-info", entity: r.tank }, null, "Carburant")}>Réservoir ${fmt(n(r.tank))} ${esc(st[r.tank].attributes.unit_of_measurement || "")}</span>` : "",
+        n(r.odometer) !== null ? `<span class="chipx"${this._click({ action: "more-info", entity: r.odometer }, null, "Kilométrage")}>${fmt(n(r.odometer))} km</span>` : "",
+        n(r.l100_long) !== null && !live ? `<span class="chipx"${this._click({ action: "more-info", entity: r.l100_long }, null, "Moyenne")}>Moyenne ${fmt(n(r.l100_long), 1)} L/100</span>` : "",
+      ].filter(Boolean).join("");
+      const isOpen = open === d.id;
+      let detail = "";
+      if (isOpen) {
+        const strip = new RegExp(`^${d.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+`, "i");
+        const rows = d.all.map((id) => {
+          const o = st[id];
+          const v = val(id);
+          if (v === null) return null;
+          const u = o.attributes.unit_of_measurement || "";
+          const x = num(v);
+          return [String(o.attributes.friendly_name || id).replace(strip, ""), x !== null ? `${fmt(x, Math.abs(x) < 10 && x % 1 ? 2 : Math.abs(x) < 100 && x % 1 ? 1 : 0)}${u ? ` ${u}` : ""}` : v, id];
+        }).filter(Boolean).sort((a, b) => a[0].localeCompare(b[0], "fr"));
+        detail = `<div class="tel-d">${rows.map(([l, v, id]) => `<div class="tel-r"${this._click({ action: "more-info", entity: id }, null, l)}><span>${esc(l)}</span><b>${esc(v)}</b></div>`).join("")}</div>`;
+      }
+      return `<div class="tel tq${isOpen ? " open" : ""}${milKm ? " low" : ""}">
+        <div class="tel-h"${this._click({ action: "ui", set: { car: isOpen ? null : d.id } }, { action: "more-info", entity: r.connected || r.tracker }, d.name)}>
+          <div class="tel-ic${live ? " ch" : ""}"><ha-icon icon="${live ? "mdi:car-sports" : "mdi:car"}"></ha-icon></div>
+          <div class="tel-t"><div class="tel-n">${esc(d.name)}</div><div class="tel-s">${esc(sub || "Pas encore de trajet")}</div></div>
+          ${live ? `<span class="chipx on">En route</span>` : ""}
+          <ha-icon class="tq-more" icon="${isOpen ? "mdi:chevron-up" : "mdi:chevron-down"}"></ha-icon>
+        </div>
+        ${main}
+        ${chips ? `<div class="tq-chips">${chips}</div>` : ""}
+        ${detail}
+      </div>`;
+    }).join("");
+    const sum = [driving ? `<span class="chipx on">${driving} en route</span>` : "", mil ? `<span class="chipx warn">${mil} voyant moteur</span>` : ""].join("");
+    return `<div class="dv"><div class="dv-h"><div class="dv-ic"><ha-icon icon="${esc(c.icon || "mdi:car-multiple")}"></ha-icon></div>` +
+      `<div class="dv-t"><div class="dv-n">${tpl(c.title ?? "Voitures", hass)}</div><div class="dv-s">${list.length} véhicule${list.length > 1 ? "s" : ""} · Torque OBD-II</div></div>${sum ? `<div class="tel-sum">${sum}</div>` : ""}</div>` +
+      `<div class="tel-g tq-g">${cars}</div></div>`;
+  }
+
+  getCardSize() { return 5; }
+}
+MaisonTorqueCard.STYLE = MaisonTelephonesCard.STYLE + `<style>
+.tq-g { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.tq .dv-g { grid-template-columns: repeat(2, 1fr); }
+.tq .vt2 { background: var(--m-card); padding: 10px 12px 8px; }
+.tq .vt2-v { font-size: 1.35rem; }
+.tq .vt2.tq-hot .vt2-v { color: var(--m-red); font-weight: 500; }
+.tq-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tq-chips .chipx { background: var(--m-card); font-size: .76rem; padding: 5px 10px; }
+.tq-chips .chipx.warn { background: var(--m-red); color: var(--m-on-pop); }
+.tq-more { --mdc-icon-size: 20px; color: var(--m-muted); flex: none; }
+.tq .tel-r span { color: var(--m-text); }
+.tq .tel-r b { color: var(--m-muted); font-weight: 500; }
+</style>`;
+
 /* ============================================================= imprimante */
 
 const PRN_FR = {
@@ -2932,6 +3075,7 @@ const LABELS = {
   stale_hours: "Appareil muet (gris) sans nouvelles depuis (heures, 0 = jamais)",
   volt_warn: "Tension basse (orange) sous (V)", volt_alert: "Tension critique (rouge) sous (V)", hours: "Durée de la courbe de tension (heures)",
   show_curve: "Courbe de tension",
+  show_battery: "Tension de la batterie BM6 du même nom",
 };
 
 const EDITORS = {
@@ -2960,6 +3104,8 @@ const EDITORS = {
   "maison-batteries-card": [() => [T("title"), I("icon"), { name: "devices", selector: { device: { integration: "bm6", multiple: true } } }, N("volt_warn", 10, 14, 0.1), N("volt_alert", 10, 14, 0.1),
     N("hours", 6, 168), B("show_curve"), N("stale_hours", 0, 720), THEME_SELECT],
     "Les boîtiers BM6 (intégration Battery Monitor BM6) sont trouvés seuls. Au-dessus de 13,2 V, le moteur tourne ou la batterie est en charge. Un clic sur une batterie affiche son détail."],
+  "maison-torque-card": [() => [T("title"), I("icon"), { name: "devices", selector: { device: { integration: "torque_obd", multiple: true } } }, B("show_location"), B("show_battery"), THEME_SELECT],
+    "Les véhicules de l'intégration Torque OBD-II sont trouvés seuls, même si leurs capteurs ont été renommés. En route : vitesse, régime, température et consommation ; à l'arrêt : le dernier trajet. Un clic sur une voiture liste tous ses capteurs."],
   "maison-imprimante-card": [() => [T("name"), T("prefix"), E("progress", "sensor"), E("remaining", "sensor"), E("stage", "sensor"), E("nozzle", "sensor"), E("bed", "sensor"),
     E("camera", "camera"), E("pause", "button"), E("resume", "button"), E("stop", "button"),
     S("camera_view", [{ value: "live", label: "Vidéo en direct" }, { value: "image", label: "Image" }]), B("show_camera"), THEME_SELECT],
@@ -2998,6 +3144,7 @@ const CARDS = [
   ["maison-voiture-card", MaisonVoitureCard, "Maison · Voiture électrique", "Batterie, autonomie, kilométrage, charge, climatisation et verrouillage.", () => ({ name: "Voiture" })],
   ["maison-telephones-card", MaisonTelephonesCard, "Maison · Téléphones et tablettes", "Batterie, charge, réseau, stockage et zone des téléphones et tablettes (application Companion).", () => ({})],
   ["maison-batteries-card", MaisonBatteriesCard, "Maison · Batteries voitures", "Tension, charge, état, température et courbe des batteries 12 V suivies par des boîtiers BM6.", () => ({})],
+  ["maison-torque-card", MaisonTorqueCard, "Maison · Voitures (Torque)", "Voitures thermiques suivies par Torque Pro : en route, dernier trajet, consommation, voyant moteur et batterie.", () => ({})],
   ["maison-imprimante-card", MaisonImprimanteCard, "Maison · Imprimante 3D", "Bambu Lab, Klipper / Moonraker ou OctoPrint : températures, avancement, caméra et commandes.", () => ({})],
   ["maison-menu-card", MaisonMenuCard, "Maison · Menu de la semaine", "Le menu jour par jour, la recette du jour, et la liste de courses.", () => ({})],
   ["maison-meteo-card", MaisonMeteoCard, "Maison · Météo", "Température extérieure en grand, prévisions et courbe 24 h.", () => ({})],
