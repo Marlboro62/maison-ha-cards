@@ -212,6 +212,7 @@
       q("distance_parcourue_avec_voyant_mil_cel_allume", "k21", live ? 0 : 37, "km", "Distance parcourue avec voyant MIL/CEL allumé");
       q("kilometrage_total", "k222006", live ? 84210 : 142380, "km", `${live ? "Clio" : "Kangoo"} - Kilométrage total`);
       if (live) q("niveau_de_carburant", "k2f", 58, "%", "Niveau de carburant");
+      q("latitude_gps", "kff1006", 48.0, "°", "Latitude GPS"); // jamais affichée par la carte
       q("temperature_huile_moteur", "k222007", live ? 96 : 28, "°C", `${name} - Température huile moteur`);
       if (live) q("rapport_engage", "k2101_slkgear", 5, null, `${name} - Rapport engagé`);
       if (!live) q("carburant_dans_le_reservoir", "k222201", 21.5, "L", `${name} - Carburant dans le réservoir`);

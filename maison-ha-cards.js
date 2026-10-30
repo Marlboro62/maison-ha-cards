@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.4.0-beta.2";
+const CARD_VERSION = "0.4.0-beta.3";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -2126,6 +2126,8 @@ const TQ_CUSTOM = {
   k222006: "odometer", k222201: "tank", k22287f: "tank", k222007: "oil", k2101_slktemp33: "oil", k2101_slkpres29: "boost",
   k2101_slkgear: "gear", k222057: "alternator", k222168: "starts",
 };
+// coordonnées GPS : jamais affichées (la carte ne montre que la zone)
+const TQ_PRIVATE = new Set(["kff1005", "kff1006", "kff1010", "kff123b"]);
 // secours quand le PID standard n'est pas lu
 const TQ_FALLBACK = { k222003: "speed", k222002: "rpm", k222001: "coolant", k22240d: "intake" };
 const tqPid = (p) => {
@@ -2153,8 +2155,9 @@ class MaisonTorqueCard extends MaisonCard {
       else if (dom === "sensor") {
         const pid = o.attributes?.pid;
         if (!pid) continue; // URL Torque
-        d.all.push(id);
         const key = tqPid(pid);
+        if (TQ_PRIVATE.has(key) || /latitude|longitude/i.test(o.attributes.friendly_name || "")) continue;
+        d.all.push(id);
         const role = TQ_PIDS[key] || TQ_CUSTOM[key];
         const fn = String(o.attributes.friendly_name || "").toLowerCase();
         if (role && !d.roles[role]) d.roles[role] = id;
@@ -2196,7 +2199,10 @@ class MaisonTorqueCard extends MaisonCard {
       const where = c.show_location !== false && tr && !BAD.has(tr.state)
         ? tr.state === "home" ? "À la maison" : tr.state === "not_home" ? "Absente" : (st[`zone.${tr.state}`]?.attributes?.friendly_name || tr.state.replace(/_/g, " "))
         : null;
-      const tripAt = r.trip_km && st[r.trip_km] ? st[r.trip_km].last_changed : null;
+      // fin du dernier trajet : déconnexion de Torque, sinon dernier changement de la distance du trajet
+      const conn = r.connected ? st[r.connected] : null;
+      const tripAt = conn && conn.state === "off" && !/^1970/.test(conn.last_changed || "") ? conn.last_changed
+        : r.trip_km && st[r.trip_km] ? st[r.trip_km].last_changed : null;
       const sub = live ? ["En route", where].filter(Boolean).join(" · ")
         : [where, tripAt ? `dernier trajet ${relTime(tripAt)}` : null].filter(Boolean).join(" · ");
       const tile = (l, v, u, id, cls = "") => v === null ? "" : `<div class="vt2 ${cls}"${this._click({ action: "more-info", entity: id }, null, l)}><div class="vt2-l">${l}</div><div class="vt2-v">${v}${u ? `<span>${u}</span>` : ""}</div></div>`;
@@ -2208,18 +2214,23 @@ class MaisonTorqueCard extends MaisonCard {
           `${tile("Liquide de refroidissement", cool !== null ? fmt(cool) : null, "°C", r.coolant, cool !== null && cool >= 105 ? "tq-hot" : "")}${tile("Consommation", n(r.l100) !== null ? fmt(n(r.l100), 1) : null, "L/100", r.l100)}` +
           `${tile("Huile", oil !== null ? fmt(oil) : null, "°C", r.oil, oil !== null && oil >= 130 ? "tq-hot" : "")}${tile("Turbo", boost !== null ? fmt(boost) : null, "mbar", r.boost)}${tile("Rapport", gear !== null ? (gear ? fmt(gear) : "N") : null, "", r.gear)}</div>`;
       } else {
-        const mov = n(r.trip_moving) ?? n(r.trip_time);
-        main = `<div class="dv-g">${tile("Dernier trajet", n(r.trip_km) !== null ? fmt(n(r.trip_km), 1) : null, "km", r.trip_km)}${tile("Durée", mov !== null ? hm(mov / 60) : null, "", r.trip_moving || r.trip_time)}` +
-          `${tile("Vitesse moyenne", n(r.trip_avg) !== null ? fmt(n(r.trip_avg)) : null, "km/h", r.trip_avg)}${tile("Consommation", n(r.trip_l100) !== null ? fmt(n(r.trip_l100), 1) : n(r.l100_long) !== null ? fmt(n(r.l100_long), 1) : null, "L/100", r.trip_l100 || r.l100_long)}</div>`;
+        // valeurs du trajet : Torque les remet à zéro en se reconnectant sans rouler, les zéros sont masqués
+        const pos = (id) => { const x = n(id); return x ? x : null; };
+        const mov = pos(r.trip_moving) ?? pos(r.trip_time);
+        const km = pos(r.trip_km);
+        const tiles = `${tile("Dernier trajet", km !== null ? fmt(km, 1) : null, "km", r.trip_km)}${tile("Durée", mov !== null ? hm(mov / 60) : null, "", r.trip_moving || r.trip_time)}` +
+          `${tile("Vitesse moyenne", pos(r.trip_avg) !== null ? fmt(pos(r.trip_avg)) : null, "km/h", r.trip_avg)}${km !== null && pos(r.trip_l100) !== null ? tile("Consommation", fmt(pos(r.trip_l100), 1), "L/100", r.trip_l100) : ""}`;
+        main = tiles ? `<div class="dv-g">${tiles}</div>` : `<div class="tq-none">Aucun trajet en mémoire : il s'affichera après le prochain parcours.</div>`;
       }
       const bat = c.show_battery !== false ? n(r.battery) : null;
+      const pos0 = (id) => { const x = n(id); return x ? x : null; };
       const chips = [
         milKm ? `<span class="chipx warn"${this._click({ action: "more-info", entity: r.mil_km }, null, "Voyant moteur")}>Voyant moteur · ${fmt(milKm)} km</span>` : "",
         bat !== null ? `<span class="chipx${bat < 12 ? " warn" : ""}"${this._click({ action: "more-info", entity: r.battery }, null, "Batterie")}>Batterie ${fmt(bat, 2)} V</span>` : "",
         n(r.fuel) !== null ? `<span class="chipx"${this._click({ action: "more-info", entity: r.fuel }, null, "Carburant")}>Carburant ${fmt(n(r.fuel))} %</span>` : n(r.tank) !== null ? `<span class="chipx"${this._click({ action: "more-info", entity: r.tank }, null, "Carburant")}>Réservoir ${fmt(n(r.tank))} ${esc(st[r.tank].attributes.unit_of_measurement || "")}</span>` : "",
-        !live && n(r.oil) !== null ? `<span class="chipx"${this._click({ action: "more-info", entity: r.oil }, null, "Huile")}>Huile ${fmt(n(r.oil))} °C</span>` : "",
+        !live && n(r.oil) !== null ? `<span class="chipx"${this._click({ action: "more-info", entity: r.oil }, null, "Huile au dernier trajet")}>Huile ${fmt(n(r.oil))} °C (dernier trajet)</span>` : "",
         n(r.odometer) !== null ? `<span class="chipx"${this._click({ action: "more-info", entity: r.odometer }, null, "Kilométrage")}>${fmt(n(r.odometer))} km</span>` : "",
-        n(r.l100_long) !== null && !live ? `<span class="chipx"${this._click({ action: "more-info", entity: r.l100_long }, null, "Moyenne")}>Moyenne ${fmt(n(r.l100_long), 1)} L/100</span>` : "",
+        pos0(r.l100_long) !== null && !live ? `<span class="chipx"${this._click({ action: "more-info", entity: r.l100_long }, null, "Moyenne")}>Moyenne ${fmt(n(r.l100_long), 1)} L/100</span>` : "",
       ].filter(Boolean).join("");
       const isOpen = open === d.id;
       let detail = "";
@@ -2264,6 +2275,7 @@ MaisonTorqueCard.STYLE = MaisonTelephonesCard.STYLE + `<style>
 .tq-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .tq-chips .chipx { background: var(--m-card); font-size: .76rem; padding: 5px 10px; }
 .tq-chips .chipx.warn { background: var(--m-red); color: var(--m-on-pop); }
+.tq-none { font-size: .82rem; color: var(--m-muted); padding: 4px 2px; }
 .tq-more { --mdc-icon-size: 20px; color: var(--m-muted); flex: none; }
 .tq .tel-r span { color: var(--m-text); }
 .tq .tel-r b { color: var(--m-muted); font-weight: 500; }

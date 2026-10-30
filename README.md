@@ -402,7 +402,7 @@ Les voitures de l'intégration [Torque OBD-II](https://github.com/Marlboro62/Hom
 
 En route, l'huile (rouge à partir de 130 °C), le turbo et le rapport s'ajoutent aux tuiles ; à l'arrêt, la dernière température d'huile apparaît en pastille.
 
-Un clic sur une voiture liste **tous ses capteurs** par ordre alphabétique ; un appui long ouvre la fiche « Torque connecté ».
+Un clic sur une voiture liste **tous ses capteurs** par ordre alphabétique, sauf les coordonnées GPS (latitude, longitude, altitude, cap), jamais affichées ; un appui long ouvre la fiche « Torque connecté ». À l'arrêt, les valeurs de trajet à zéro (Torque les remet à zéro quand il se reconnecte sans rouler) sont masquées.
 
 `devices` (vide = toutes), `show_location` (`true`), `show_battery` (`true`), `title`, `icon`.
 
