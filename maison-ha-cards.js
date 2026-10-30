@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.4.0-beta.1";
+const CARD_VERSION = "0.4.0-beta.2";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -2121,6 +2121,13 @@ const TQ_PIDS = {
   k21: "mil_km", kff1238: "obd_volt", kff1204: "trip_km", kff1268: "trip_moving", kff1266: "trip_time", kff1272: "trip_avg",
   kff1208: "trip_l100", kff1207: "l100", kff5203: "l100_long", kff1258: "co2", kff1225: "torque", kff1226: "hp", kff129a: "phone",
 };
+// PID propres au véhicule (définitions personnalisées Torque) : Renault Laguna III (Mode 22) et Mercedes SLK R170 (bloc 21 01)
+const TQ_CUSTOM = {
+  k222006: "odometer", k222201: "tank", k22287f: "tank", k222007: "oil", k2101_slktemp33: "oil", k2101_slkpres29: "boost",
+  k2101_slkgear: "gear", k222057: "alternator", k222168: "starts",
+};
+// secours quand le PID standard n'est pas lu
+const TQ_FALLBACK = { k222003: "speed", k222002: "rpm", k222001: "coolant", k22240d: "intake" };
 const tqPid = (p) => {
   p = String(p || "").toLowerCase();
   const h = p.slice(1);
@@ -2147,14 +2154,17 @@ class MaisonTorqueCard extends MaisonCard {
         const pid = o.attributes?.pid;
         if (!pid) continue; // URL Torque
         d.all.push(id);
-        const role = TQ_PIDS[tqPid(pid)];
+        const key = tqPid(pid);
+        const role = TQ_PIDS[key] || TQ_CUSTOM[key];
         const fn = String(o.attributes.friendly_name || "").toLowerCase();
         if (role && !d.roles[role]) d.roles[role] = id;
-        // PID propres au véhicule (« Laguna - Kilométrage total »…)
+        else if (TQ_FALLBACK[key]) (d.fallback ||= {})[TQ_FALLBACK[key]] ||= id;
+        // autres PID propres au véhicule, d'après leur nom
         else if (/kilom[ée]trage total|odom/.test(fn)) d.roles.odometer ||= id;
         else if (/carburant dans le r[ée]servoir/.test(fn)) d.roles.tank ||= id;
       }
     }
+    for (const d of Object.values(map)) for (const [k, id] of Object.entries(d.fallback || {})) d.roles[k] ||= id;
     // batterie BM6 au nom du véhicule (« Batterie Renault » pour « Renault »)
     const bm = Object.entries(reg).filter(([id, e]) => ["bm6", "bm2", "bm7"].includes(e.platform) && hass.states[id]?.attributes?.device_class === "voltage");
     for (const d of Object.values(map)) {
@@ -2193,8 +2203,10 @@ class MaisonTorqueCard extends MaisonCard {
       let main;
       if (live) {
         const cool = n(r.coolant);
+        const oil = n(r.oil), boost = n(r.boost), gear = n(r.gear);
         main = `<div class="dv-g">${tile("Vitesse", n(r.speed) !== null ? fmt(n(r.speed)) : n(r.gps_speed) !== null ? fmt(n(r.gps_speed)) : null, "km/h", r.speed || r.gps_speed)}${tile("Régime", n(r.rpm) !== null ? fmt(n(r.rpm)) : null, "tr/min", r.rpm)}` +
-          `${tile("Liquide de refroidissement", cool !== null ? fmt(cool) : null, "°C", r.coolant, cool !== null && cool >= 105 ? "tq-hot" : "")}${tile("Consommation", n(r.l100) !== null ? fmt(n(r.l100), 1) : null, "L/100", r.l100)}</div>`;
+          `${tile("Liquide de refroidissement", cool !== null ? fmt(cool) : null, "°C", r.coolant, cool !== null && cool >= 105 ? "tq-hot" : "")}${tile("Consommation", n(r.l100) !== null ? fmt(n(r.l100), 1) : null, "L/100", r.l100)}` +
+          `${tile("Huile", oil !== null ? fmt(oil) : null, "°C", r.oil, oil !== null && oil >= 130 ? "tq-hot" : "")}${tile("Turbo", boost !== null ? fmt(boost) : null, "mbar", r.boost)}${tile("Rapport", gear !== null ? (gear ? fmt(gear) : "N") : null, "", r.gear)}</div>`;
       } else {
         const mov = n(r.trip_moving) ?? n(r.trip_time);
         main = `<div class="dv-g">${tile("Dernier trajet", n(r.trip_km) !== null ? fmt(n(r.trip_km), 1) : null, "km", r.trip_km)}${tile("Durée", mov !== null ? hm(mov / 60) : null, "", r.trip_moving || r.trip_time)}` +
@@ -2205,6 +2217,7 @@ class MaisonTorqueCard extends MaisonCard {
         milKm ? `<span class="chipx warn"${this._click({ action: "more-info", entity: r.mil_km }, null, "Voyant moteur")}>Voyant moteur · ${fmt(milKm)} km</span>` : "",
         bat !== null ? `<span class="chipx${bat < 12 ? " warn" : ""}"${this._click({ action: "more-info", entity: r.battery }, null, "Batterie")}>Batterie ${fmt(bat, 2)} V</span>` : "",
         n(r.fuel) !== null ? `<span class="chipx"${this._click({ action: "more-info", entity: r.fuel }, null, "Carburant")}>Carburant ${fmt(n(r.fuel))} %</span>` : n(r.tank) !== null ? `<span class="chipx"${this._click({ action: "more-info", entity: r.tank }, null, "Carburant")}>Réservoir ${fmt(n(r.tank))} ${esc(st[r.tank].attributes.unit_of_measurement || "")}</span>` : "",
+        !live && n(r.oil) !== null ? `<span class="chipx"${this._click({ action: "more-info", entity: r.oil }, null, "Huile")}>Huile ${fmt(n(r.oil))} °C</span>` : "",
         n(r.odometer) !== null ? `<span class="chipx"${this._click({ action: "more-info", entity: r.odometer }, null, "Kilométrage")}>${fmt(n(r.odometer))} km</span>` : "",
         n(r.l100_long) !== null && !live ? `<span class="chipx"${this._click({ action: "more-info", entity: r.l100_long }, null, "Moyenne")}>Moyenne ${fmt(n(r.l100_long), 1)} L/100</span>` : "",
       ].filter(Boolean).join("");

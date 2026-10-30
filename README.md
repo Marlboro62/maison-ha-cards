@@ -395,6 +395,13 @@ Les voitures de l'intégration [Torque OBD-II](https://github.com/Marlboro62/Hom
 - la **zone** (« À la maison », « Absente » ou le nom de la zone, jamais l'adresse ni la carte) ;
 - des pastilles : **voyant moteur** (distance parcourue voyant allumé, en rouge), **batterie** (tension du boîtier BM6 dont le nom contient celui de la voiture, ex. « Batterie Clio » pour « Clio »), **carburant**, **kilométrage** (PID propre au véhicule, ex. « Laguna - Kilométrage total ») et consommation moyenne.
 
+**PID propres au véhicule** (définitions personnalisées `torque_sensor_definitions.yaml`), reconnus d'après leur clé :
+
+- Renault Laguna III (Mode 22) : kilométrage total (`k222006`), carburant dans le réservoir (`k222201`, sinon `k22287f`), température d'huile (`k222007`), puissance de l'alternateur, cumul des démarrages ; vitesse, régime, liquide de refroidissement et air d'admission (`k222001` à `k222003`, `k22240d`) servent de secours si les PID standard ne sont pas lus ;
+- Mercedes SLK R170 (bloc `21 01`) : température d'huile (`k2101_slktemp33`), pression de suralimentation (`k2101_slkpres29`) et rapport engagé (`k2101_slkgear`).
+
+En route, l'huile (rouge à partir de 130 °C), le turbo et le rapport s'ajoutent aux tuiles ; à l'arrêt, la dernière température d'huile apparaît en pastille.
+
 Un clic sur une voiture liste **tous ses capteurs** par ordre alphabétique ; un appui long ouvre la fiche « Torque connecté ».
 
 `devices` (vide = toutes), `show_location` (`true`), `show_battery` (`true`), `title`, `icon`.
