@@ -84,9 +84,10 @@ L'énergie et Tempo ont leurs propres cartes : [Cartes Linky Énergie](https://g
 
 ### Avec HACS (recommandé)
 
-1. Dans HACS, menu **⋮** → **Dépôts personnalisés**.
-2. Ajoutez `https://github.com/Marlboro62/maison-ha-cards` avec le type **Tableau de bord** (Dashboard).
-3. Cherchez **Cartes Maison HA**, installez, puis rechargez la page (Ctrl+F5).
+1. Dans HACS, cherchez **Cartes Maison HA** et installez-les.
+2. Rechargez la page (Ctrl+F5).
+
+Si la carte n'apparaît pas encore dans la recherche de HACS, ajoutez le dépôt à la main : menu **⋮** → **Dépôts personnalisés**, adresse `https://github.com/Marlboro62/maison-ha-cards`, type **Tableau de bord** (Dashboard), puis cherchez **Cartes Maison HA**.
 
 > Tant qu'il n'existe qu'une version bêta, activez **Afficher les versions bêta** dans la fenêtre de téléchargement de HACS.
 
