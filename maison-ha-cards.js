@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.4.2-beta.2";
+const CARD_VERSION = "0.4.2-beta.3";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -209,7 +209,7 @@ const COLORS = {
   brown: "var(--m-brown)", marron: "var(--m-brown)",
   pop: "var(--m-pop)", accent: "var(--m-pop)",
   grey: "var(--m-chip)", gray: "var(--m-chip)", gris: "var(--m-chip)",
-  white: "var(--m-card)", blanc: "var(--m-card)",
+  white: "var(--m-solid, var(--m-card))", blanc: "var(--m-solid, var(--m-card))",
   black: "var(--m-text)", noir: "var(--m-text)",
   none: "transparent",
 };
@@ -328,35 +328,38 @@ ha-card {
 }
 ha-card.th-maison {
   --m-card: var(--gray000, var(--ha-card-background, var(--card-background-color, #f4f3f1)));
+  --m-solid: var(--gray000, var(--card-background-color, #f4f3f1));
   --m-text: var(--gray800, var(--primary-text-color, #2b2c2f));
-  --m-chip: var(--gray200, color-mix(in srgb, var(--m-text) 9%, var(--m-card)));
-  --m-faint: var(--gray400, var(--disabled-text-color, #b4b2ad)); --m-pop: var(--active-pop, #f6b38b); --m-on-pop: var(--active-on-pop, var(--gray800, #2b2c2f));
+  --m-chip: var(--gray200, color-mix(in srgb, var(--m-text) 9%, var(--m-solid)));
+  --m-faint: var(--gray400, var(--disabled-text-color, #b4b2ad)); --m-pop: var(--active-pop, var(--accent-color, #f6b38b)); --m-on-pop: var(--active-on-pop, var(--text-accent-color, var(--gray800, #2b2c2f)));
   --m-green: var(--active-green, #94d3a2); --m-orange: var(--active-orange, #f5c27a); --m-red: var(--active-red, #f08c84);
   --m-yellow: var(--active-yellow, #f3dc76); --m-blue: var(--active-blue, #8eb5f5); --m-blue-dark: var(--active-blue-dark, #3f5d8f);
-  --m-purple: var(--active-purple, #c4a8f4); --m-brown: var(--active-brown, #b98a63); --m-acc: var(--pop, #d2703a);
+  --m-purple: var(--active-purple, #c4a8f4); --m-brown: var(--active-brown, #b98a63); --m-acc: var(--pop, var(--accent-color, #d2703a));
 }
 ha-card.th-maison.dark {
   --m-card: var(--gray000, var(--ha-card-background, var(--card-background-color, #24272c)));
+  --m-solid: var(--gray000, var(--card-background-color, #24272c));
   --m-text: var(--gray800, var(--primary-text-color, #eceef1));
-  --m-chip: var(--gray200, color-mix(in srgb, var(--m-text) 12%, var(--m-card)));
-  --m-faint: var(--gray400, var(--disabled-text-color, #6d737c)); --m-pop: var(--active-pop, #f0a274); --m-on-pop: var(--active-on-pop, #1f2124);
+  --m-chip: var(--gray200, color-mix(in srgb, var(--m-text) 12%, var(--m-solid)));
+  --m-faint: var(--gray400, var(--disabled-text-color, #6d737c)); --m-pop: var(--active-pop, var(--accent-color, #f0a274)); --m-on-pop: var(--active-on-pop, var(--text-accent-color, #1f2124));
   --m-green: var(--active-green, #6fbf83); --m-orange: var(--active-orange, #e9ad5b); --m-red: var(--active-red, #e5776e);
   --m-yellow: var(--active-yellow, #e2c95a); --m-blue: var(--active-blue, #6f9de8); --m-blue-dark: var(--active-blue-dark, #4a6fae);
-  --m-purple: var(--active-purple, #a98be6); --m-brown: var(--active-brown, #a77a55); --m-acc: var(--pop, #f0a274);
+  --m-purple: var(--active-purple, #a98be6); --m-brown: var(--active-brown, #a77a55); --m-acc: var(--pop, var(--accent-color, #f0a274));
 }
 ha-card.th-v2 {
-  --m-card: #1f2a3c; --m-chip: #2c3a52; --m-text: #e7edf5; --m-faint: #5d6e88; --m-pop: #1d93e3; --m-on-pop: #ffffff;
+  --m-card: #1f2a3c; --m-solid: #1f2a3c; --m-chip: #2c3a52; --m-text: #e7edf5; --m-faint: #5d6e88; --m-pop: #1d93e3; --m-on-pop: #ffffff;
   --m-green: #78b81a; --m-orange: #e8962e; --m-red: #e04848; --m-yellow: #e2c33c; --m-blue: #3f7ff0; --m-blue-dark: #2b56a8;
   --m-purple: #8c6be0; --m-brown: #a77a55; --m-acc: #4fb0f0;
   border: 1px solid #2f3d55; --m-radius: 18px;
 }
 ha-card.th-v2.light {
-  --m-card: #ffffff; --m-chip: #eef2f7; --m-text: #1a2434; --m-faint: #a3afc0; --m-pop: #1673b8; --m-on-pop: #ffffff;
+  --m-card: #ffffff; --m-solid: #ffffff; --m-chip: #eef2f7; --m-text: #1a2434; --m-faint: #a3afc0; --m-pop: #1673b8; --m-on-pop: #ffffff;
   --m-green: #5c9c12; --m-orange: #d98420; --m-red: #d23c3c; --m-yellow: #d2b22a; --m-blue: #2f6fe0; --m-blue-dark: #24508f; --m-acc: #1673b8;
   border-color: #dbe2ec; box-shadow: 0 1px 3px rgba(26, 36, 52, .08);
 }
 ha-card.th-ha {
   --m-card: var(--ha-card-background, var(--card-background-color, #fff));
+  --m-solid: var(--card-background-color, #fff);
   --m-chip: color-mix(in srgb, var(--primary-text-color, #000) 8%, transparent);
   --m-text: var(--primary-text-color, #1f2937); --m-faint: var(--disabled-text-color, #9aa0a6);
   --m-pop: var(--accent-color, #ff9800); --m-on-pop: var(--text-accent-color, #fff);
@@ -1194,7 +1197,7 @@ ha-card.bare { background: none; border: none; box-shadow: none; border-radius: 
 .room { box-shadow: var(--maison-shadow, none); }
 .p-tabs { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; }
 .p-title { flex: 1; font-size: 16px; font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.p-tab { display: inline-flex; align-items: center; padding: 4px; border-radius: 50px; background: var(--m-text); color: var(--m-card); }
+.p-tab { display: inline-flex; align-items: center; padding: 4px; border-radius: 50px; background: var(--m-text); color: var(--m-solid, var(--m-card)); }
 .p-tab .p-ti { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; }
 .p-tab ha-icon { --mdc-icon-size: 21px; }
 .p-tab.on { background: var(--m-pop); color: var(--m-on-pop); }
@@ -1317,7 +1320,7 @@ ${SECTION_STYLE}
 .tile.na { opacity: .55; }
 .tile.sq { height: auto; aspect-ratio: 1; min-height: 104px; max-height: 140px; padding: 14px 12px; background: var(--m-card); color: var(--m-text);
   box-shadow: var(--maison-shadow, none); display: flex; flex-direction: column; justify-content: flex-end; cursor: pointer; }
-.tile.sq.on { background: color-mix(in srgb, var(--m-pop) 55%, var(--m-card)); }
+.tile.sq.on { background: color-mix(in srgb, var(--m-pop) 55%, var(--m-solid, var(--m-card))); }
 .q-i { position: absolute; top: 14px; left: 12px; --mdc-icon-size: 34px; }
 .tile.sq:not(.on) .q-i { opacity: .8; }
 .q-n { font-size: calc(15px * var(--maison-font-scale, 1)); font-weight: 600; letter-spacing: var(--maison-letter-spacing, normal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2771,7 +2774,7 @@ class MaisonNavigationCard extends MaisonCard {
 }
 MaisonNavigationCard.STYLE = `<style>
 :host { display: block; min-height: 70px; font-family: var(--ha-font-family-body, inherit); font-synthesis-weight: var(--maison-font-synthesis, auto); }
-ha-card { background: var(--m-text); color: var(--m-card); border-radius: 100px; padding: 8px 10px; overflow: visible; }
+ha-card { background: var(--m-text); color: var(--m-solid, var(--m-card)); border-radius: 100px; padding: 8px 10px; overflow: visible; }
 ha-card.th-v2 { background: #0f1724; color: #e7edf5; }
 ha-card.nav-fixed { position: fixed; z-index: 6; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); left: 10px; width: calc(100% - 20px); height: auto; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
 @media (min-width: 871px) {
@@ -2857,7 +2860,7 @@ ha-card.bare { background: none; border: none; box-shadow: none; border-radius: 
 .hm-i { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 10px 18px; border-radius: 14px;
   font-size: 19px; font-weight: 300; letter-spacing: normal; transition: background .2s; }
 .hm-i ha-icon { --mdc-icon-size: 22px; opacity: .55; }
-.hm-i.on { background: color-mix(in srgb, var(--m-blue) 22%, var(--m-card)); color: var(--m-blue-dark); }
+.hm-i.on { background: color-mix(in srgb, var(--m-blue) 22%, var(--m-solid, var(--m-card))); color: var(--m-blue-dark); }
 .hm-i.on ha-icon { opacity: 1; }
 .hm-xs { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--m-line); display: flex; flex-direction: column; gap: 8px; }
 .hm-x { display: flex; align-items: center; gap: 8px; font-size: calc(15px * var(--maison-font-scale, 1)); font-weight: 400; }
@@ -3060,13 +3063,13 @@ MaisonPopupCard.STYLE = `<style>
   .pp-sheet { width: var(--pp-w, min(90vw, 900px)); max-width: calc(100vw - 40px); max-height: 86vh; border-radius: 28px; animation: pp-f .2s; }
 }
 .pp-h { display: flex; align-items: center; gap: 10px; padding: 14px 14px 6px 18px; }
-.pp-i { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--m-text); color: var(--m-card); flex: none; }
+.pp-i { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--m-text); color: var(--m-solid, var(--m-card)); flex: none; }
 .pp-t { flex: 1; font-size: 1.15rem; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pp-x { all: unset; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--m-card); color: var(--m-text); }
 .pp-x:focus-visible { outline: 2px solid var(--m-pop); }
 .pp-c { overflow-y: auto; padding: 8px 14px calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 12px; overscroll-behavior: contain; }
 .pp-tabs { display: flex; justify-content: center; gap: 8px; padding: 4px 14px 6px; flex-wrap: wrap; }
-.pp-tab { all: unset; display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px 9px 12px; border-radius: 50px; cursor: pointer; background: var(--m-text); color: var(--m-card); font-size: 14px; }
+.pp-tab { all: unset; display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px 9px 12px; border-radius: 50px; cursor: pointer; background: var(--m-text); color: var(--m-solid, var(--m-card)); font-size: 14px; }
 .pp-tab ha-icon { --mdc-icon-size: 20px; }
 .pp-tab.on { background: var(--m-pop); color: var(--m-on-pop); }
 .pp-tab:focus-visible { outline: 2px solid var(--m-pop); outline-offset: 2px; }
