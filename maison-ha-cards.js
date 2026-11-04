@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.4.1";
+const CARD_VERSION = "0.4.2-beta.1";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -1123,7 +1123,8 @@ class MaisonPlanCard extends MaisonCard {
       icon: t.icon || defIcon,
       layout: t.layout || null,
       rows: t.rows || null,
-      columns: t.columns || 3,
+      // Nombre entier (1 à 12) : la valeur YAML va dans un attribut style
+      columns: Math.min(12, Math.max(1, Math.round(Number(t.columns)) || 3)),
       rooms: (t.rooms || []).map((rc) => resolveRoom(typeof rc === "string" ? { area: rc } : rc, hass)),
     });
     if (c.favorites) tabs.push(mk(Array.isArray(c.favorites) ? { rooms: c.favorites } : c.favorites, "fav", "mdi:heart"));
