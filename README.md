@@ -486,7 +486,7 @@ Pour une police large (tout en majuscules, par exemple), trois réglages du thè
 | Variable | Rôle | Défaut |
 | --- | --- | --- |
 | `maison-font-scale` | Taille des petits textes (noms et états des tuiles, jours de la météo, date, heure de l'agenda) | `1` |
-| `maison-letter-spacing` | Espacement des lettres des noms et états des tuiles | celui de la carte |
+| `maison-letter-spacing` | Espacement des lettres des noms et états des tuiles | normal |
 | `maison-font-synthesis` | `none` : pas de faux gras quand la police n'a qu'une graisse (le faux gras élargit le texte) | `auto` |
 
 Exemple : `maison-font-scale: "0.8"`, `maison-letter-spacing: "0.02em"`, `maison-font-synthesis: none`.

@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.4.2-beta.1";
+const CARD_VERSION = "0.4.2-beta.2";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -371,7 +371,7 @@ ha-icon { --mdc-icon-size: 24px; display: inline-flex; }
 [data-a], [data-h] { cursor: pointer; }
 [data-a]:focus-visible, [data-h]:focus-visible, button:focus-visible { outline: 2px solid var(--m-pop); outline-offset: 2px; }
 button { font: inherit; color: inherit; }
-.ls { letter-spacing: .3em; }
+.ls { letter-spacing: normal; }
 .muted { color: var(--m-muted); }
 /* barre de boutons ronds dans une pilule */
 .rbar { display: flex; gap: 4px; padding: 5px; border-radius: 50px; background: var(--m-chip); }
@@ -1062,7 +1062,7 @@ const ROOM_STYLE = `
   background: var(--m-card); color: var(--m-text); container-type: inline-size; }
 .r-i { position: absolute; top: -30px; left: -30px; width: 80px; height: 80px; border-radius: 50%; z-index: 2; }
 .r-i ha-icon { position: absolute; left: 35px; top: 37px; --mdc-icon-size: 26px; color: var(--m-pop); opacity: .9; }
-.r-n { position: relative; z-index: 2; padding: 10px 10px 0 58px; font-size: .78em; letter-spacing: .3em; line-height: 1.35; text-align: left;
+.r-n { position: relative; z-index: 2; padding: 10px 10px 0 58px; font-size: .86em; font-weight: 600; letter-spacing: normal; line-height: 1.35; text-align: left;
   overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .r-graph { position: absolute; left: 0; right: 0; bottom: 46px; height: 38px; z-index: 1; opacity: .9; }
 .r-graph .spark-a { display: none; }
@@ -1070,13 +1070,13 @@ const ROOM_STYLE = `
 .r-media img { max-width: 100%; flex: 1 1 auto; min-height: 0; object-fit: cover; border-radius: 10px; }
 .r-media ha-icon { --mdc-icon-size: 34px; color: var(--m-pop); }
 .r-media span { font-size: .7rem; padding-right: 36px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--m-muted); }
-.r-t { position: absolute; left: 12px; bottom: 6px; z-index: 2; font-size: min(2.4em, 19cqw); line-height: 1; font-weight: 300; white-space: nowrap; max-width: calc(100% - 52px); overflow: hidden; }
+.r-t { position: absolute; left: 12px; bottom: 6px; z-index: 2; font-size: min(2.4em, 19cqw); line-height: 1; font-weight: 600; white-space: nowrap; max-width: calc(100% - 52px); overflow: hidden; }
 .r-t small { font-size: .55em; }
 .r-t em { font-style: normal; font-size: .32em; opacity: .7; margin-left: 2px; }
 .r-bs { position: absolute; right: 8px; bottom: 8px; z-index: 3; display: flex; flex-direction: column; gap: 6px; }
 .r-b { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--m-pop); color: var(--m-on-pop); }
 .r-b ha-icon { --mdc-icon-size: 19px; }
-@container (max-width: 150px) { .r-n { padding-left: 52px; letter-spacing: .18em; } }
+@container (max-width: 150px) { .r-n { padding-left: 52px; letter-spacing: normal; } }
 `;
 
 class MaisonPieceCard extends MaisonCard {
@@ -1234,8 +1234,8 @@ function sectionsOf(c, hass, domain, filter) {
 const SECTION_STYLE = `
 ha-card.bare { background: none; border: none; box-shadow: none; border-radius: 0; overflow: visible; }
 .sec + .sec { margin-top: 14px; }
-.sec-t { padding: 4px 10px 8px; font-size: 1.2em; font-weight: 500; letter-spacing: .3em; }
-.sec-s { padding: 0 10px 8px; margin-top: -6px; font-size: .9rem; color: var(--m-muted); font-weight: 300; }
+.sec-t { padding: 4px 10px 8px; font-size: 1.2em; font-weight: 600; letter-spacing: normal; }
+.sec-s { padding: 0 10px 8px; margin-top: -6px; font-size: .9rem; color: var(--m-muted); font-weight: 400; }
 .grid { display: grid; gap: 10px; }
 `;
 
@@ -1308,20 +1308,20 @@ ${SECTION_STYLE}
 .tile { position: relative; height: 114px; box-sizing: border-box; border-radius: var(--m-radius); padding: 14px 10px 14px 18px; overflow: hidden; transition: background .25s; container-type: inline-size; }
 .th-v2 .tile, .th-ha .tile { border: 1px solid var(--m-line); }
 .t-i { position: absolute; top: 14px; right: 14px; --mdc-icon-size: 28px; opacity: .85; }
-.t-s { position: absolute; left: 16px; top: 24px; font-size: clamp(22px, 24cqw, 38px); font-weight: 300; line-height: 1; white-space: nowrap; max-width: calc(100% - 66px); }
+.t-s { position: absolute; left: 16px; top: 24px; font-size: clamp(22px, 24cqw, 38px); font-weight: 600; line-height: 1; white-space: nowrap; max-width: calc(100% - 66px); }
 .t-s small { display: block; font-size: calc(12px * var(--maison-font-scale, 1)); font-weight: 600; margin-top: 3px; opacity: .85; overflow: hidden; text-overflow: ellipsis; }
 .tile:not(.on) .t-s small { color: var(--m-acc); opacity: 1; }
 .t-sw { position: absolute; right: 8px; top: 44px; --mdc-icon-size: 50px; opacity: .9; }
 .tile:not(.on) .t-sw { opacity: .35; }
-.t-n { position: absolute; left: 16px; right: 10px; bottom: 12px; font-size: calc(13px * var(--maison-font-scale, 1)); font-weight: 600; letter-spacing: var(--maison-letter-spacing, .3em); opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-n { position: absolute; left: 16px; right: 10px; bottom: 12px; font-size: calc(13px * var(--maison-font-scale, 1)); font-weight: 600; letter-spacing: var(--maison-letter-spacing, normal); opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tile.na { opacity: .55; }
 .tile.sq { height: auto; aspect-ratio: 1; min-height: 104px; max-height: 140px; padding: 14px 12px; background: var(--m-card); color: var(--m-text);
   box-shadow: var(--maison-shadow, none); display: flex; flex-direction: column; justify-content: flex-end; cursor: pointer; }
 .tile.sq.on { background: color-mix(in srgb, var(--m-pop) 55%, var(--m-card)); }
 .q-i { position: absolute; top: 14px; left: 12px; --mdc-icon-size: 34px; }
 .tile.sq:not(.on) .q-i { opacity: .8; }
-.q-n { font-size: calc(15px * var(--maison-font-scale, 1)); font-weight: 600; letter-spacing: var(--maison-letter-spacing, .12em); text-transform: lowercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.q-s { font-size: calc(11px * var(--maison-font-scale, 1)); letter-spacing: var(--maison-letter-spacing, .1em); color: var(--m-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-n { font-size: calc(15px * var(--maison-font-scale, 1)); font-weight: 600; letter-spacing: var(--maison-letter-spacing, normal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-s { font-size: calc(11px * var(--maison-font-scale, 1)); letter-spacing: var(--maison-letter-spacing, normal); color: var(--m-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>`;
 
 /* ===================================================================== volets */
@@ -1394,10 +1394,10 @@ ${SECTION_STYLE}
 .th-v2 .vt:not(.in-tab), .th-ha .vt:not(.in-tab) { border: 1px solid var(--m-line); }
 .vt.in-tab { background: none; padding: 16px 16px 6px 20px; }
 .v-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; }
-.v-l { font-size: 4.2em; font-weight: 400; line-height: 1; }
+.v-l { font-size: 4.2em; font-weight: 600; line-height: 1; }
 .v-l sup { font-size: .32em; vertical-align: top; position: relative; top: .35em; margin-left: 2px; }
 .v-word { font-size: .45em; font-weight: 500; }
-.v-n { margin-top: auto; font-size: 1.15em; font-weight: 500; letter-spacing: .22em; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.v-n { margin-top: auto; font-size: 1.15em; font-weight: 600; letter-spacing: normal; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
 .v-st { font-size: 12px; color: var(--m-muted); margin-top: 2px; }
 .v-sl { display: flex; align-items: center; }
 .v-sl input { writing-mode: vertical-lr; direction: rtl; width: 40px; height: 150px; margin: 0; accent-color: var(--m-pop); cursor: pointer; }
@@ -1498,7 +1498,7 @@ class MaisonAlarmeCard extends MaisonCard {
 }
 MaisonAlarmeCard.STYLE = `<style>
 .al { position: relative; min-height: 240px; padding: 20px; box-sizing: border-box; overflow: hidden; display: grid; grid-template-columns: 1fr auto; grid-template-rows: min-content 1fr; gap: 2px 12px; }
-.al-n { grid-column: 1; font-size: 1.5em; font-weight: 400; letter-spacing: .3em; position: relative; z-index: 2; }
+.al-n { grid-column: 1; font-size: 1.5em; font-weight: 600; letter-spacing: normal; position: relative; z-index: 2; }
 .al-l { grid-column: 1; font-size: 12px; font-weight: 500; color: var(--m-muted); position: relative; z-index: 2; align-self: start; }
 .al-b { grid-column: 2; grid-row: 1 / span 2; position: relative; z-index: 2; }
 .al-b .rbar { background: var(--m-chip); }
@@ -1512,7 +1512,7 @@ ha-card.trig .al-bg { background: rgba(255,255,255,.18); }
 ha-card.trig .al-bg ha-icon { color: #fff; animation: m-flash 1.2s infinite; }
 .pad { position: absolute; inset: 0; z-index: 5; background: var(--m-card); padding: 14px; display: flex; flex-direction: column; gap: 10px; color: var(--m-text); }
 .pad-h { display: flex; align-items: center; gap: 10px; font-size: .95rem; }
-.pad-h .dots { flex: 1; text-align: center; letter-spacing: .3em; font-size: 1.1rem; }
+.pad-h .dots { flex: 1; text-align: center; letter-spacing: normal; font-size: 1.1rem; }
 .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; flex: 1; }
 .k { display: grid; place-items: center; border-radius: 14px; background: var(--m-chip); font-size: 1.3rem; min-height: 40px; }
 </style>`;
@@ -1589,7 +1589,7 @@ class MaisonModeCard extends MaisonCard {
 MaisonModeCard.STYLE = `<style>
 .md { padding: 10px; }
 .md-h { position: relative; padding: 6px 48px 4px 10px; min-height: 34px; }
-.md-n { font-size: 1.5em; font-weight: 400; letter-spacing: .3em; line-height: 1.25; overflow-wrap: anywhere; }
+.md-n { font-size: 1.5em; font-weight: 600; letter-spacing: normal; line-height: 1.25; overflow-wrap: anywhere; }
 .md-i { font-size: .45em; font-weight: 600; letter-spacing: 0; color: var(--m-acc); margin-left: 6px; vertical-align: middle; }
 .md-s { font-size: 12px; color: var(--m-muted); font-weight: 500; }
 .md-ic { position: absolute; right: 8px; top: 6px; --mdc-icon-size: 30px; opacity: .8; }
@@ -1623,12 +1623,12 @@ const DEVICE_STYLE = `
 .dv-ic { width: 48px; height: 48px; border-radius: 50%; background: var(--m-chip); display: grid; place-items: center; flex: none; }
 .dv-ic ha-icon { --mdc-icon-size: 28px; color: var(--m-acc); }
 .dv-t { flex: 1; min-width: 0; }
-.dv-n { font-size: 1.35em; font-weight: 500; letter-spacing: .3em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dv-n { font-size: 1.35em; font-weight: 600; letter-spacing: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dv-s { font-size: .85rem; color: var(--m-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dv-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
 .vt2 { background: var(--m-chip); border-radius: 16px; padding: 12px 12px 10px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .vt2-l { font-size: .78rem; color: var(--m-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.vt2-v { font-size: 1.7rem; font-weight: 300; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vt2-v { font-size: 1.7rem; font-weight: 600; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .vt2-v span { font-size: .5em; margin-left: 3px; color: var(--m-muted); font-weight: 500; }
 .vt2 .bar-p { margin-top: auto; height: 10px; }
 .dv-alert { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--m-pop); color: var(--m-on-pop); margin-bottom: 12px; font-weight: 600; }
@@ -1814,7 +1814,7 @@ MaisonVoitureCard.STYLE = `<style>${DEVICE_STYLE}
 .dv-h .rb { flex: none; width: 44px; }
 .cl { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 10px 10px 10px 14px; border-radius: 16px; background: var(--m-chip); }
 .cl-t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.cl-v { font-size: 1.5rem; font-weight: 300; }
+.cl-v { font-size: 1.5rem; font-weight: 600; }
 .cl-v span { font-size: .55em; margin-left: 2px; color: var(--m-muted); }
 .cl .rbar { background: var(--m-card); flex: none; }
 .cl .rb { width: 40px; height: 40px; flex: none; }
@@ -1973,7 +1973,7 @@ MaisonTelephonesCard.STYLE = `<style>${DEVICE_STYLE}
 .tel-t { flex: 1; min-width: 0; }
 .tel-n { font-weight: 600; font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tel-s { font-size: .76rem; color: var(--m-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tel-b { font-size: 1.5rem; font-weight: 300; white-space: nowrap; }
+.tel-b { font-size: 1.5rem; font-weight: 600; white-space: nowrap; }
 .tel-b span { font-size: .55em; color: var(--m-muted); margin-left: 2px; }
 .tel-b.low { color: var(--m-red); font-weight: 500; }
 .tel-bar { height: 6px; }
@@ -2585,7 +2585,7 @@ MaisonMeteoCard.STYLE = `<style>
 .wx-m { position: relative; z-index: 2; padding: 4px 18px 10px; display: flex; align-items: flex-end; gap: 10px; flex: 1; }
 .wx-c { display: flex; align-items: center; gap: 6px; color: var(--m-muted); font-size: .85rem; padding-bottom: 14px; order: 2; }
 .wx-c ha-icon { --mdc-icon-size: 22px; }
-.wx-t { font-size: 5rem; font-weight: 400; line-height: .95; white-space: nowrap; }
+.wx-t { font-size: 5rem; font-weight: 600; line-height: .95; white-space: nowrap; }
 .wx-t small { font-size: .5em; }
 .wx-t em { font-style: normal; font-size: .3em; opacity: .7; margin-left: 2px; }
 .wx-g { position: absolute; left: 0; right: 0; bottom: 0; height: 70px; z-index: 1; }
@@ -2713,12 +2713,12 @@ MaisonJaugeCard.STYLE = `<style>
 .jg-bg { fill: none; stroke: var(--m-chip); stroke-width: 14; stroke-linecap: round; }
 .jg-v { fill: none; stroke-width: 14; stroke-linecap: round; transition: stroke-dasharray .6s; }
 .jg-o { position: absolute; inset: 22% 18% 22%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
-.jg-m { font-size: clamp(1.6rem, 15cqw, 3rem); font-weight: 400; line-height: 1; }
+.jg-m { font-size: clamp(1.6rem, 15cqw, 3rem); font-weight: 600; line-height: 1; }
 .jg-m span { font-size: .38em; margin-left: 3px; color: var(--m-muted); }
 .jg-line { width: 55%; height: 4px; border-radius: 4px; background: var(--m-text); opacity: .6; margin: 4px 0 6px; }
 .jg-s { display: flex; align-items: center; gap: 6px; font-size: clamp(.8rem, 6cqw, 1.15rem); white-space: nowrap; }
 .jg-s ha-icon { --mdc-icon-size: 20px; color: var(--m-muted); }
-.jg-n { position: absolute; left: 0; right: 0; bottom: 6%; text-align: center; font-size: clamp(.8rem, 6cqw, 1.1rem); letter-spacing: .4em; text-transform: lowercase; color: var(--m-acc); opacity: .85; }
+.jg-n { position: absolute; left: 0; right: 0; bottom: 6%; text-align: center; font-size: clamp(.8rem, 6cqw, 1.1rem); letter-spacing: normal; color: var(--m-acc); opacity: .85; }
 </style>`;
 
 /* ============================================================= navigation */
@@ -2852,15 +2852,15 @@ class MaisonHorlogeCard extends MaisonCard {
 MaisonHorlogeCard.STYLE = `<style>
 ha-card.bare { background: none; border: none; box-shadow: none; border-radius: 0; overflow: visible; padding: 4px 6px; }
 .hm-c { font-size: 64px; font-weight: 600; letter-spacing: .04em; line-height: 1; text-align: center; }
-.hm-d { margin-top: 6px; text-align: center; font-size: calc(15px * var(--maison-font-scale, 1)); font-weight: 300; color: var(--m-muted); }
+.hm-d { margin-top: 6px; text-align: center; font-size: calc(15px * var(--maison-font-scale, 1)); font-weight: 400; color: var(--m-muted); }
 .hm-m { margin-top: 26px; display: flex; flex-direction: column; gap: 4px; padding-top: 18px; border-top: 1px solid var(--m-line); }
 .hm-i { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 10px 18px; border-radius: 14px;
-  font-size: 19px; font-weight: 300; letter-spacing: .3em; text-transform: lowercase; transition: background .2s; }
+  font-size: 19px; font-weight: 300; letter-spacing: normal; transition: background .2s; }
 .hm-i ha-icon { --mdc-icon-size: 22px; opacity: .55; }
 .hm-i.on { background: color-mix(in srgb, var(--m-blue) 22%, var(--m-card)); color: var(--m-blue-dark); }
 .hm-i.on ha-icon { opacity: 1; }
 .hm-xs { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--m-line); display: flex; flex-direction: column; gap: 8px; }
-.hm-x { display: flex; align-items: center; gap: 8px; font-size: calc(15px * var(--maison-font-scale, 1)); font-weight: 300; }
+.hm-x { display: flex; align-items: center; gap: 8px; font-size: calc(15px * var(--maison-font-scale, 1)); font-weight: 400; }
 .hm-x ha-icon { --mdc-icon-size: 20px; color: var(--m-acc); }
 </style>`;
 
