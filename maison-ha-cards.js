@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.4.2-beta.3";
+const CARD_VERSION = "0.4.2-beta.4";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -2666,7 +2666,7 @@ ha-card.bare { background: none; border: none; box-shadow: none; border-radius: 
 .ev-time { grid-area: time; padding-left: 18px; font-size: calc(.95em * var(--maison-font-scale, 1)); }
 .ev.first .ev-time { font-size: calc(1.3em * var(--maison-font-scale, 1)); }
 .ev-e { grid-area: ev; padding-left: 18px; overflow: hidden; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
-.ev.none { grid-template-areas: "ev"; color: var(--m-muted); }
+.ev.none { grid-template-areas: "ev"; grid-template-columns: 1fr; color: var(--m-muted); }
 .ev.none .ev-e { padding: 0; }
 .ev.today { background: var(--m-pop); color: var(--m-on-pop); }
 .ev.today .ev-date { border-right-color: currentColor; }
