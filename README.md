@@ -28,6 +28,9 @@
 
 # Cartes Maison HA
 
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://hacs.xyz/)
+[![Release](https://img.shields.io/github/v/release/Marlboro62/maison-ha-cards)](https://github.com/Marlboro62/maison-ha-cards/releases)
+
 **Dix-huit cartes Lovelace autonomes, dans un seul fichier**, pour construire un tableau de bord « maison » complet : pastilles d'état, pièces et plan par étage, lumières, volets, alarme, modes, aspirateur robot, voiture électrique, imprimante 3D, menu de la semaine, météo, agenda, jauges, titres de section, barre de navigation et fenêtres (pop-ups).
 
 Elles remplacent les tableaux de bord construits avec **button-card** et ses modèles : plus besoin de button-card, decluttering-card, card-mod, bubble-card, layout-card, local-conditional-card, state-switch, mini-graph-card, mushroom, vacuum-card… **Une seule ressource**, un éditeur visuel pour chaque carte, et des entités **trouvées automatiquement** quand c'est possible.
