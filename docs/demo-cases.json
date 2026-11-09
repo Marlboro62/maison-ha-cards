@@ -734,6 +734,65 @@
   ]
  },
  {
+  "name": "pieces",
+  "width": 620,
+  "cards": [
+   {
+    "type": "custom:maison-titre-card",
+    "title": "Pièces",
+    "icon": "mdi:home-floor-0"
+   },
+   {
+    "type": "custom:maison-piece-card",
+    "area": "salon",
+    "name": "Salon",
+    "icon": "mdi:sofa",
+    "media_player": "media_player.shield_3",
+    "media_image": "image.image_jellyfin_salon",
+    "temperature": "sensor.salon_temperature",
+    "humidity": "sensor.salon_humidity",
+    "doors": [
+     "binary_sensor.salon_capteurfenetre_contact"
+    ],
+    "lights": [
+     "light.lumieres_ambiance",
+     "light.salon_lumieres"
+    ]
+   },
+   {
+    "type": "custom:maison-piece-card",
+    "area": "chambre_leo",
+    "icon": "mdi:bed-single",
+    "corner": "bottom-left"
+   },
+   {
+    "type": "custom:maison-horloge-card",
+    "items": [
+     {
+      "name": "home",
+      "icon": "mdi:dots-grid",
+      "path": "#maison"
+     },
+     {
+      "name": "cctv",
+      "icon": "mdi:cctv",
+      "path": "#cctv"
+     },
+     {
+      "name": "consos",
+      "icon": "mdi:chart-areaspline",
+      "path": "#energie"
+     },
+     {
+      "name": "extra",
+      "icon": "mdi:star-plus",
+      "path": "#extra"
+     }
+    ]
+   }
+  ]
+ },
+ {
   "name": "menu",
   "width": 900,
   "cards": [
