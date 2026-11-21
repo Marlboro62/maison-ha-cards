@@ -1989,7 +1989,9 @@ MaisonTelephonesCard.STYLE = `<style>${DEVICE_STYLE}
 
 /* ===================================================== batteries de voiture */
 
-const BM_PLATFORMS = ["bm6", "bm2", "bm7", "battery_monitor"];
+const BM_PLATFORMS = ["bm6", "bm2", "bm7", "battery_monitor", "battery_monitor_bm6"];
+/** Plateformes des boîtiers BM2/BM6/BM7, dont « battery_monitor_bm6 » (intégration HACS Battery Monitor BM6). */
+const isBmPlatform = (p) => BM_PLATFORMS.includes(p) || /^(battery_monitor|bm\d)(_|$)/.test(p || "");
 const BM_FR = {
   charging: "En charge", discharging: "Au repos", resting: "Au repos", idle: "Au repos", static: "Au repos", cranking: "Démarrage",
   normal: "Normale", low_voltage: "Tension basse", high_voltage: "Tension haute", low_battery: "Batterie faible", engine_running: "Moteur en marche",
@@ -2005,7 +2007,7 @@ class MaisonBatteriesCard extends MaisonCard {
     const only = [].concat(c.devices || []).map((x) => String(x).toLowerCase());
     const map = {};
     for (const [id, e] of Object.entries(reg)) {
-      if (!BM_PLATFORMS.includes(e.platform) || domainOf(id) !== "sensor" || !hass.states[id]) continue;
+      if (!isBmPlatform(e.platform) || domainOf(id) !== "sensor" || !hass.states[id]) continue;
       const dev = devs[e.device_id];
       const name = dev?.name_by_user || dev?.name || "Batterie";
       if (only.length && !only.includes(name.toLowerCase()) && !only.includes(e.device_id)) continue;
@@ -2173,7 +2175,7 @@ class MaisonTorqueCard extends MaisonCard {
     }
     for (const d of Object.values(map)) for (const [k, id] of Object.entries(d.fallback || {})) d.roles[k] ||= id;
     // batterie BM6 au nom du véhicule (« Batterie Renault » pour « Renault »)
-    const bm = Object.entries(reg).filter(([id, e]) => ["bm6", "bm2", "bm7"].includes(e.platform) && hass.states[id]?.attributes?.device_class === "voltage");
+    const bm = Object.entries(reg).filter(([id, e]) => isBmPlatform(e.platform) && hass.states[id]?.attributes?.device_class === "voltage");
     for (const d of Object.values(map)) {
       // « Batterie Renault » ↔ « Renault Laguna » : le nom de la batterie sans « Batterie » doit figurer dans celui de la voiture, ou l'inverse
       const car = d.name.toLowerCase();
@@ -3135,7 +3137,7 @@ const EDITORS = {
     "Tesla (Fleet, Teslemetry, Tessie, Tesla custom) est détectée seule. Pour une autre voiture, choisissez au moins la batterie."],
   "maison-telephones-card": [() => [T("title"), I("icon"), { name: "devices", selector: { device: { integration: "mobile_app", multiple: true } } }, N("low", 0, 100), N("stale_hours", 0, 720), B("show_location"), THEME_SELECT],
     "Les téléphones et tablettes de l'application Home Assistant (Companion) sont trouvés seuls. Un clic sur un appareil affiche son détail."],
-  "maison-batteries-card": [() => [T("title"), I("icon"), { name: "devices", selector: { device: { integration: "bm6", multiple: true } } }, N("volt_warn", 10, 14, 0.1), N("volt_alert", 10, 14, 0.1),
+  "maison-batteries-card": [() => [T("title"), I("icon"), { name: "devices", selector: { device: { integration: "battery_monitor_bm6", multiple: true } } }, N("volt_warn", 10, 14, 0.1), N("volt_alert", 10, 14, 0.1),
     N("hours", 6, 168), B("show_curve"), N("stale_hours", 0, 720), THEME_SELECT],
     "Les boîtiers BM6 (intégration Battery Monitor BM6) sont trouvés seuls. Au-dessus de 13,2 V, le moteur tourne ou la batterie est en charge. Un clic sur une batterie affiche son détail."],
   "maison-torque-card": [() => [T("title"), I("icon"), { name: "devices", selector: { device: { integration: "torque_obd", multiple: true } } }, B("show_location"), B("show_battery"), THEME_SELECT],
