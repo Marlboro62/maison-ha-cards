@@ -25,7 +25,7 @@
  */
 
 (() => {
-const CARD_VERSION = "0.4.3";
+const CARD_VERSION = "0.4.4";
 
 /* ------------------------------------------------------------- utilitaires */
 
@@ -1997,6 +1997,11 @@ const BM_FR = {
   normal: "Normale", low_voltage: "Tension basse", high_voltage: "Tension haute", low_battery: "Batterie faible", engine_running: "Moteur en marche",
 };
 const BM_STATES = /^(charging|discharging|resting|idle|static|cranking)$/;
+/** Charge au repos d'après la tension, sur la plage de l'intégration (sod/soc_min–max) ou 11,8–12,7 V. */
+const bmPctFromVolt = (v, a = {}) => {
+  const lo = num(a.sod_min ?? a.soc_min) ?? 11.8, hi = num(a.sod_max ?? a.soc_max) ?? 12.7;
+  return v === null || !(hi > lo) ? null : Math.round(Math.max(0, Math.min(100, ((v - lo) / (hi - lo)) * 100)));
+};
 
 class MaisonBatteriesCard extends MaisonCard {
   static get DEFAULTS() { return { theme: "maison", title: "Batteries voitures", volt_warn: 12.3, volt_alert: 12, hours: 48, stale_hours: 3, show_curve: true }; }
@@ -2046,13 +2051,17 @@ class MaisonBatteriesCard extends MaisonCard {
     let lowN = 0, awayN = 0;
     const tiles = list.map((d) => {
       const r = d.roles;
-      const v = num(val(r.volt)), pct = num(val(r.pct)) ?? num(val(r.pct_dev));
+      const v = num(val(r.volt)), pctBm = num(val(r.pct)) ?? num(val(r.pct_dev));
       const seenAt = Math.max(0, ...[r.volt, r.pct].filter(Boolean).map((id) => Math.max(Date.parse(st[id]?.last_reported || 0) || 0, Date.parse(st[id]?.last_updated || 0) || 0)));
       const away = staleMs > 0 && seenAt > 0 && Date.now() - seenAt > staleMs;
       const stTxt = String(val(r.state) || "").toLowerCase();
       const cond = String(val(r.cond) || "").toLowerCase();
       const running = v !== null && v >= 13.2;
       const charging = !away && (stTxt === "charging" || running);
+      // au repos, une charge de l'intégration qui contredit la tension (100 % à 11,7 V) est recalculée d'après la tension
+      const pctVolt = charging ? null : bmPctFromVolt(v, st[r.pct]?.attributes);
+      const pctFixed = pctBm !== null && pctVolt !== null && Math.abs(pctBm - pctVolt) > 25;
+      const pct = pctFixed ? pctVolt : pctBm;
       const level = v === null ? null : charging ? "ch" : v < alert ? "alert" : v < warn ? "warn" : "ok";
       const lowV = !away && (level === "alert" || level === "warn" || cond === "low_voltage");
       if (lowV) lowN++;
@@ -2081,7 +2090,8 @@ class MaisonBatteriesCard extends MaisonCard {
       if (isOpen) {
         const proxy = val(r.proxy) ? String(val(r.proxy)).replace(/\s*\(([0-9a-f]{2}:){5}[0-9a-f]{2}\)\s*$/i, "") : null;
         const rows = [
-          ["mdi:battery-heart-variant", "Charge calculée", pct !== null && num(val(r.pct)) !== null ? `${fmt(num(val(r.pct)))} %` : null, r.pct],
+          ["mdi:battery-sync", "Charge selon la tension", pctFixed ? `${fmt(pctVolt)} %` : null, r.volt],
+          ["mdi:battery-heart-variant", pctFixed ? "Charge calculée (incohérente)" : "Charge calculée", num(val(r.pct)) !== null ? `${fmt(num(val(r.pct)))} %` : null, r.pct],
           ["mdi:battery-outline", "Charge selon le BM6", num(val(r.pct_dev)) !== null ? `${fmt(num(val(r.pct_dev)))} %` : null, r.pct_dev],
           ["mdi:car-battery", "État du BM6", cond ? BM_FR[cond] || cond.replace(/_/g, " ") : null, r.cond],
           ["mdi:thermometer", "Température", temp !== null ? `${fmt(temp, 1)} °C` : null, r.temp],
