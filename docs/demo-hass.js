@@ -180,7 +180,7 @@
     // batteries de voiture suivies par des boîtiers BM6 (noms fictifs)
     for (const [k, name, v, pct, pdev, cond, temp, rssi] of [["bm6_aa", "Batterie Clio", 12.52, 86, 74, "normal", 14, -78], ["bm6_bb", "Batterie Kangoo", 12.08, 40, 26, "low_voltage", 11, -90]]) {
       devices[k] = { id: k, name, manufacturer: "BM6", model: "Battery Monitor BM6" };
-      const b = (suf, val, attrs = {}) => s(`sensor.${k}_${suf}`, val, attrs, { p: "bm6", dev: k, lc: iso(-6 * 60e3) });
+      const b = (suf, val, attrs = {}) => s(`sensor.${k}_${suf}`, val, attrs, { p: "battery_monitor_bm6", dev: k, lc: iso(-6 * 60e3) });
       b("tension", v, { unit_of_measurement: "V", device_class: "voltage", friendly_name: `${name} Tension` });
       b("pour_cent", pct, { unit_of_measurement: "%", device_class: "battery", state_algorithm: "soc_sod", friendly_name: `${name} Charge` });
       b("pourcentage_de_l_appareil", pdev, { unit_of_measurement: "%", device_class: "battery", friendly_name: `${name} Charge (BM6)` });
